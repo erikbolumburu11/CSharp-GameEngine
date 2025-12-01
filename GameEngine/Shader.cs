@@ -1,4 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,9 @@ namespace GameEngine
     public class Shader : IDisposable
     {
         int Handle;
+
+        Dictionary<string, int> uniformLocations;
+
 
         public Shader(string vertexPath, string fragmentPath)
         {
@@ -71,6 +75,20 @@ namespace GameEngine
             GL.DetachShader(Handle, FragmentShader);
             GL.DeleteShader(FragmentShader);
             GL.DeleteShader(VertexShader);
+
+            GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
+
+            uniformLocations = new Dictionary<string, int>();
+
+            // Loop over all the uniforms,
+            for (var i = 0; i < numberOfUniforms; i++)
+            {
+                var key = GL.GetActiveUniform(Handle, i, out _, out _);
+
+                var location = GL.GetUniformLocation(Handle, key);
+
+                uniformLocations.Add(key, location);
+            }
         }
 
         public void Use()
@@ -78,9 +96,42 @@ namespace GameEngine
             GL.UseProgram(Handle);
         }
 
+        public void Use(Matrix4 transform)
+        {
+            GL.UseProgram(Handle);
+
+            int location = GL.GetUniformLocation(Handle, "transform");
+
+            GL.UniformMatrix4(location, true, ref transform);
+        }
+
         public int GetAttribLocation(string attribName)
         {
             return GL.GetAttribLocation(Handle, attribName);
+        }
+
+             public void SetInt(string name, int data)
+        {
+            GL.UseProgram(Handle);
+            GL.Uniform1(uniformLocations[name], data);
+        }
+
+        public void SetFloat(string name, float data)
+        {
+            GL.UseProgram(Handle);
+            GL.Uniform1(uniformLocations[name], data);
+        }
+
+        public void SetMatrix4(string name, Matrix4 data)
+        {
+            GL.UseProgram(Handle);
+            GL.UniformMatrix4(uniformLocations[name], true, ref data);
+        }
+
+        public void SetVector3(string name, Vector3 data)
+        {
+            GL.UseProgram(Handle);
+            GL.Uniform3(uniformLocations[name], data);
         }
 
         private bool disposedValue = false;

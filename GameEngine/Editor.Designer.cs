@@ -64,6 +64,7 @@
             Controls.Add(glControl1);
             Name = "Editor";
             Text = "Editor";
+            Load += Editor_Load;
             ResumeLayout(false);
         }
 

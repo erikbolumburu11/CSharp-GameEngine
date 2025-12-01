@@ -83,5 +83,10 @@ namespace GameEngine
             glControl1.MakeCurrent();
             game.Resize(glControl1.Width, glControl1.Height);
         }
+
+        private void Editor_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
