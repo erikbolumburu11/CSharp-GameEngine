@@ -58,5 +58,10 @@ namespace GameEngine
             string projectDir = Directory.GetParent(workingDirectory).Parent.Parent.FullName;
             return projectDir;
         }
+
+        public static string GetDefaultVertPath() => GetProjectDir() + "/Shaders/shader.vert";
+        public static string GetDefaultFragPath() => GetProjectDir() + "/Shaders/shader.frag";
+
+        public static float DegToRad(float degrees) => degrees * ((float)Math.PI / 180f);
     }
 }
