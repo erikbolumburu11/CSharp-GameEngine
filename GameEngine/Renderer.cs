@@ -8,14 +8,20 @@ namespace GameEngine
         Matrix4 view;
         Matrix4 projection;
 
-        public Renderer(int width, int height)
+        EditorCamera camera;
+
+        public Renderer(EditorCamera camera, int width, int height)
         {
-            view = Matrix4.CreateTranslation(0.0f, 0.0f, -3.0f);
+            this.camera = camera;
+
+            view = Matrix4.LookAt(camera.position, camera.position + camera.Front, camera.Up);
             projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), width / height, 0.1f, 100.0f);
         }
 
-        public void Render(GameObjectManager gameObjectManager)
+        public void Render(GameObjectManager gameObjectManager, EditorCamera camera)
         {
+            view = camera.GetViewMatrix();
+            projection = camera.GetProjectionMatrix(camera.Width, camera.Height);
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
@@ -27,9 +33,8 @@ namespace GameEngine
                 shader.SetMatrix4("projection", projection);
                 shader.Use();
 
-                Texture texture = gameObject.texture;
-                texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
-                texture.Use(TextureUnit.Texture0);
+                gameObject.texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
+                gameObject.texture.Use(TextureUnit.Texture0);
 
                 GL.BindVertexArray(gameObject.VertexArrayObject);
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);

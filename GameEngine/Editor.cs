@@ -14,36 +14,31 @@ namespace GameEngine
         {
             InitializeComponent();
 
-            game = new Game(glControl1.Width, glControl1.Height);
+            game = new Game(glControl1);
 
             timer = new Stopwatch();
             timer.Start();
+
+            glControl1.TabStop = true;
+
+            Load += (s, e) => glControl1.Focus();
+
+            glControl1.GotFocus += (s, e) => Console.WriteLine("GLControl focused");
+            glControl1.LostFocus += (s, e) => Console.WriteLine("GLControl lost focus");
 
             glControl1.Load += GlControl1_Load;
             glControl1.Paint += GlControl1_Paint;
             glControl1.Resize += GlControl1_Resize;
             Application.Idle += Application_Idle;
+
+            glControl1.KeyDown += (s, e) => game.InputHandler.OnKeyDown(e);
+            glControl1.KeyUp += (s, e) => game.InputHandler.OnKeyUp(e);
+
+            glControl1.MouseDown    += (s, e) => game.InputHandler.OnMouseClick(e);
+            glControl1.MouseUp      += (s, e) => game.InputHandler.OnMouseRelease(e);
+            glControl1.MouseMove    += (s, e) => game.InputHandler.OnMouseMove(e);
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        struct NativeMessage
-        {
-            public IntPtr handle;
-            public uint msg;
-            public IntPtr wParam;
-            public IntPtr lParam;
-            public uint time;
-            public System.Drawing.Point p;
-        }
-
-        [DllImport("user32.dll")]
-        static extern bool PeekMessage(
-           out NativeMessage msg,
-           IntPtr hWnd,
-           uint wMsgFilterMin,
-           uint wMsgFilterMax,
-           uint wRemoveMsg
-       );
 
         private void Application_Idle(object? sender, EventArgs e)
         {
@@ -84,9 +79,29 @@ namespace GameEngine
             game.Resize(glControl1.Width, glControl1.Height);
         }
 
-        private void Editor_Load(object sender, EventArgs e)
+        private void glControl1_Click(object sender, EventArgs e)
         {
-
+            glControl1.Focus();
         }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        struct NativeMessage
+        {
+            public IntPtr handle;
+            public uint msg;
+            public IntPtr wParam;
+            public IntPtr lParam;
+            public uint time;
+            public Point p;
+        }
+
+        [DllImport("user32.dll")]
+        static extern bool PeekMessage(
+           out NativeMessage msg,
+           IntPtr hWnd,
+           uint wMsgFilterMin,
+           uint wMsgFilterMax,
+           uint wRemoveMsg
+       );
     }
 }

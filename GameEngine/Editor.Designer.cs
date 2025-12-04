@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             glControl1 = new OpenTK.GLControl.GLControl();
-            button1 = new Button();
             SuspendLayout();
             // 
             // glControl1
@@ -45,32 +44,21 @@
             glControl1.SharedContext = null;
             glControl1.Size = new Size(600, 450);
             glControl1.TabIndex = 0;
-            // 
-            // button1
-            // 
-            button1.Location = new Point(12, 13);
-            button1.Name = "button1";
-            button1.Size = new Size(182, 23);
-            button1.TabIndex = 1;
-            button1.Text = "Create Cube";
-            button1.UseVisualStyleBackColor = true;
+            glControl1.Click += glControl1_Click;
             // 
             // Editor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(button1);
             Controls.Add(glControl1);
             Name = "Editor";
             Text = "Editor";
-            Load += Editor_Load;
             ResumeLayout(false);
         }
 
         #endregion
 
         private OpenTK.GLControl.GLControl glControl1;
-        private Button button1;
     }
 }
