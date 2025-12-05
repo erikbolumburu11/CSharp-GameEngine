@@ -44,6 +44,14 @@
         "net7.0-windows7.0": {
           "targetAlias": "net7.0-windows",
           "dependencies": {
+            "DockPanelSuite": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
+            "DockPanelSuite.ThemeVS2012": {
+              "target": "Package",
+              "version": "[3.1.1, )"
+            },
             "OpenTK": {
               "target": "Package",
               "version": "[4.9.4, )"

@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "y359fPc6AhblmWIoi4mABowEtT1vPxIIlPjAuUgbHpWnXi+Nds5Xkndmx51rSJBv1nzLIOE4j9j8GejTfZIWEw==",
+  "dgSpecHash": "jAgAtdQxnsW8W0zUVDdLDSugzXPHuKtYQAZE9nziHiURibgH9npPKDCIlPoVUQjNe39iiQsyf42hwNELmvRVyQ==",
   "success": true,
   "projectFilePath": "C:\\dev\\Projects\\GameEngine\\GameEngine\\GameEngine.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\erikf\\.nuget\\packages\\dockpanelsuite\\3.1.1\\dockpanelsuite.3.1.1.nupkg.sha512",
+    "C:\\Users\\erikf\\.nuget\\packages\\dockpanelsuite.themevs2012\\3.1.1\\dockpanelsuite.themevs2012.3.1.1.nupkg.sha512",
     "C:\\Users\\erikf\\.nuget\\packages\\opentk\\4.9.4\\opentk.4.9.4.nupkg.sha512",
     "C:\\Users\\erikf\\.nuget\\packages\\opentk.audio.openal\\4.9.4\\opentk.audio.openal.4.9.4.nupkg.sha512",
     "C:\\Users\\erikf\\.nuget\\packages\\opentk.compute\\4.9.4\\opentk.compute.4.9.4.nupkg.sha512",

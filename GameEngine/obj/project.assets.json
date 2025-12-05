@@ -2,6 +2,160 @@
   "version": 3,
   "targets": {
     "net7.0-windows7.0": {
+      "DockPanelSuite/3.1.1": {
+        "type": "package",
+        "compile": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App.WindowsForms"
+        ]
+      },
+      "DockPanelSuite.ThemeVS2012/3.1.1": {
+        "type": "package",
+        "dependencies": {
+          "DockPanelSuite": "3.1.1"
+        },
+        "compile": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll": {}
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App.WindowsForms"
+        ],
+        "contentFiles": {
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/DockIndicator_PaneDiamond_HotspotIndex.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/Dockindicator_PaneDiamond_Hotspot.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowBottom.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowLeft.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowRight.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowTop.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreBottom.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreCenter.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreLeft.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreRight.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreTop.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskDock.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskDockFive.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabClose.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabList.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabOverflow.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowAutoHide.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowClose.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowDock.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowOption.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowBottom.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowCenter.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowLeft.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowRight.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          },
+          "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowTop.png": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          }
+        }
+      },
       "OpenTK/4.9.4": {
         "type": "package",
         "dependencies": {
@@ -237,6 +391,134 @@
     }
   },
   "libraries": {
+    "DockPanelSuite/3.1.1": {
+      "sha512": "goYuIMrAHyzPfwqqW5MHXk9mWVI4oyILqC1TRlNS0pzXY7ku/fxoY1j0JuDJnwboqpIxvAatOT9ONrheCMo3/Q==",
+      "type": "package",
+      "path": "dockpanelsuite/3.1.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "dockpanelsuite.3.1.1.nupkg.sha512",
+        "dockpanelsuite.nuspec",
+        "lib/net35/WeifenLuo.WinFormsUI.Docking.dll",
+        "lib/net40/WeifenLuo.WinFormsUI.Docking.dll",
+        "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.dll"
+      ]
+    },
+    "DockPanelSuite.ThemeVS2012/3.1.1": {
+      "sha512": "3kXoMKnFid2fHQPTVQP6JM7BnPr9wkVu4dPgSGp+eeBTH9lZda4Cvuv87M6fKKL6eZSMM+BVYeB1gl08ijeXkg==",
+      "type": "package",
+      "path": "dockpanelsuite.themevs2012/3.1.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "content/ThemeVS2012/Resources/DockIndicator_PaneDiamond_HotspotIndex.png",
+        "content/ThemeVS2012/Resources/Dockindicator_PaneDiamond_Hotspot.png",
+        "content/ThemeVS2012/Resources/MaskArrowBottom.png",
+        "content/ThemeVS2012/Resources/MaskArrowLeft.png",
+        "content/ThemeVS2012/Resources/MaskArrowRight.png",
+        "content/ThemeVS2012/Resources/MaskArrowTop.png",
+        "content/ThemeVS2012/Resources/MaskCoreBottom.png",
+        "content/ThemeVS2012/Resources/MaskCoreCenter.png",
+        "content/ThemeVS2012/Resources/MaskCoreLeft.png",
+        "content/ThemeVS2012/Resources/MaskCoreRight.png",
+        "content/ThemeVS2012/Resources/MaskCoreTop.png",
+        "content/ThemeVS2012/Resources/MaskDock.png",
+        "content/ThemeVS2012/Resources/MaskDockFive.png",
+        "content/ThemeVS2012/Resources/MaskTabClose.png",
+        "content/ThemeVS2012/Resources/MaskTabList.png",
+        "content/ThemeVS2012/Resources/MaskTabOverflow.png",
+        "content/ThemeVS2012/Resources/MaskToolWindowAutoHide.png",
+        "content/ThemeVS2012/Resources/MaskToolWindowClose.png",
+        "content/ThemeVS2012/Resources/MaskToolWindowDock.png",
+        "content/ThemeVS2012/Resources/MaskToolWindowOption.png",
+        "content/ThemeVS2012/Resources/MaskWindowBottom.png",
+        "content/ThemeVS2012/Resources/MaskWindowCenter.png",
+        "content/ThemeVS2012/Resources/MaskWindowLeft.png",
+        "content/ThemeVS2012/Resources/MaskWindowRight.png",
+        "content/ThemeVS2012/Resources/MaskWindowTop.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/DockIndicator_PaneDiamond_HotspotIndex.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/Dockindicator_PaneDiamond_Hotspot.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskArrowBottom.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskArrowLeft.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskArrowRight.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskArrowTop.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskCoreBottom.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskCoreCenter.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskCoreLeft.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskCoreRight.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskCoreTop.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskDock.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskDockFive.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskTabClose.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskTabList.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskTabOverflow.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskToolWindowAutoHide.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskToolWindowClose.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskToolWindowDock.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskToolWindowOption.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskWindowBottom.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskWindowCenter.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskWindowLeft.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskWindowRight.png",
+        "contentFiles/any/net35/ThemeVS2012/Resources/MaskWindowTop.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/DockIndicator_PaneDiamond_HotspotIndex.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/Dockindicator_PaneDiamond_Hotspot.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskArrowBottom.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskArrowLeft.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskArrowRight.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskArrowTop.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskCoreBottom.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskCoreCenter.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskCoreLeft.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskCoreRight.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskCoreTop.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskDock.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskDockFive.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskTabClose.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskTabList.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskTabOverflow.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskToolWindowAutoHide.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskToolWindowClose.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskToolWindowDock.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskToolWindowOption.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskWindowBottom.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskWindowCenter.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskWindowLeft.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskWindowRight.png",
+        "contentFiles/any/net40/ThemeVS2012/Resources/MaskWindowTop.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/DockIndicator_PaneDiamond_HotspotIndex.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/Dockindicator_PaneDiamond_Hotspot.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowBottom.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowLeft.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowRight.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskArrowTop.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreBottom.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreCenter.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreLeft.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreRight.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskCoreTop.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskDock.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskDockFive.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabClose.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabList.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskTabOverflow.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowAutoHide.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowClose.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowDock.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskToolWindowOption.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowBottom.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowCenter.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowLeft.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowRight.png",
+        "contentFiles/any/netcoreapp3.1/ThemeVS2012/Resources/MaskWindowTop.png",
+        "dockpanelsuite.themevs2012.3.1.1.nupkg.sha512",
+        "dockpanelsuite.themevs2012.nuspec",
+        "lib/net35/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll",
+        "lib/net40/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll",
+        "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll"
+      ]
+    },
     "OpenTK/4.9.4": {
       "sha512": "fp9ZI6akO4ZuIGzuUE0QRU5zRJhXbSXa5racehFoTdvodhRDecXCOcH68mRsZaMwnxLO9ECnf2LGM9BmiJKvhw==",
       "type": "package",
@@ -474,6 +756,8 @@
   },
   "projectFileDependencyGroups": {
     "net7.0-windows7.0": [
+      "DockPanelSuite >= 3.1.1",
+      "DockPanelSuite.ThemeVS2012 >= 3.1.1",
       "OpenTK >= 4.9.4",
       "OpenTK.GLControl >= 4.0.2",
       "StbImageSharp >= 2.30.15"
@@ -523,6 +807,14 @@
       "net7.0-windows7.0": {
         "targetAlias": "net7.0-windows",
         "dependencies": {
+          "DockPanelSuite": {
+            "target": "Package",
+            "version": "[3.1.1, )"
+          },
+          "DockPanelSuite.ThemeVS2012": {
+            "target": "Package",
+            "version": "[3.1.1, )"
+          },
           "OpenTK": {
             "target": "Package",
             "version": "[4.9.4, )"

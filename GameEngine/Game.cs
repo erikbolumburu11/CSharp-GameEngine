@@ -16,6 +16,8 @@ namespace GameEngine
         public InputHandler InputHandler => input;
 
         GameObjectManager gameObjectManager;
+        public GameObjectManager GameObjectManager => gameObjectManager;
+
         Renderer renderer;
         EditorCamera camera;
 
@@ -35,13 +37,13 @@ namespace GameEngine
             input = new InputHandler();
             camera = new EditorCamera(new Vector3(0, 0, 3), 1f, 0.2f, width, height, input);
             renderer = new Renderer(camera, width, height);
+
         }
 
         public void Initialize()
         {
-            GameObject cube = gameObjectManager.CreateCube();
-            cube.transform.rotation = Quaternion.FromEulerAngles(0, 0, 0);
             GL.Enable(EnableCap.DepthTest);
+            GameObject cube = gameObjectManager.CreateCube();
         }
 
         public void Resize(int width, int height)
@@ -49,6 +51,7 @@ namespace GameEngine
             this.width = width;
             this.height = height;
             GL.Viewport(0, 0, width, height);
+            camera.SetAspectRatio(width, height);
         }
 
         public void Update(float deltaTime)

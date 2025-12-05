@@ -13,9 +13,6 @@ namespace GameEngine
         public Renderer(EditorCamera camera, int width, int height)
         {
             this.camera = camera;
-
-            view = Matrix4.LookAt(camera.position, camera.position + camera.Front, camera.Up);
-            projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), width / height, 0.1f, 100.0f);
         }
 
         public void Render(GameObjectManager gameObjectManager, EditorCamera camera)

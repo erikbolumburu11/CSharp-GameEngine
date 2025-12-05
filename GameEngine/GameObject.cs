@@ -4,22 +4,6 @@ using System;
 
 namespace GameEngine
 {
-    public class GameObjectManager
-    {
-        public List<GameObject> gameObjects;
-
-        public GameObjectManager()
-        {
-            gameObjects = new();
-        }
-
-        public GameObject CreateCube()
-        {
-            GameObject cube = new();
-            gameObjects.Add(cube);
-            return cube;
-        }
-    }
 
     public class Transform
     {
@@ -37,6 +21,9 @@ namespace GameEngine
 
     public class GameObject
     {
+        string name;
+        public string Name => name;
+
         public Transform transform;
 
         int VertexBufferObject;
@@ -45,8 +32,10 @@ namespace GameEngine
         public Shader shader;
         public Texture texture;
 
-        public GameObject()
+        public GameObject(string name)
         {
+            this.name = name;
+
             transform = new();
 
             CreateBuffers();

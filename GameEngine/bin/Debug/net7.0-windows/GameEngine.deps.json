@@ -8,12 +8,33 @@
     ".NETCoreApp,Version=v7.0": {
       "GameEngine/1.0.0": {
         "dependencies": {
+          "DockPanelSuite": "3.1.1",
+          "DockPanelSuite.ThemeVS2012": "3.1.1",
           "OpenTK": "4.9.4",
           "OpenTK.GLControl": "4.0.2",
           "StbImageSharp": "2.30.15"
         },
         "runtime": {
           "GameEngine.dll": {}
+        }
+      },
+      "DockPanelSuite/3.1.1": {
+        "runtime": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "3.1.1.0"
+          }
+        }
+      },
+      "DockPanelSuite.ThemeVS2012/3.1.1": {
+        "dependencies": {
+          "DockPanelSuite": "3.1.1"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "3.1.1.0"
+          }
         }
       },
       "OpenTK/4.9.4": {
@@ -183,6 +204,20 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "DockPanelSuite/3.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-goYuIMrAHyzPfwqqW5MHXk9mWVI4oyILqC1TRlNS0pzXY7ku/fxoY1j0JuDJnwboqpIxvAatOT9ONrheCMo3/Q==",
+      "path": "dockpanelsuite/3.1.1",
+      "hashPath": "dockpanelsuite.3.1.1.nupkg.sha512"
+    },
+    "DockPanelSuite.ThemeVS2012/3.1.1": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3kXoMKnFid2fHQPTVQP6JM7BnPr9wkVu4dPgSGp+eeBTH9lZda4Cvuv87M6fKKL6eZSMM+BVYeB1gl08ijeXkg==",
+      "path": "dockpanelsuite.themevs2012/3.1.1",
+      "hashPath": "dockpanelsuite.themevs2012.3.1.1.nupkg.sha512"
     },
     "OpenTK/4.9.4": {
       "type": "package",

@@ -1,6 +1,7 @@
 using OpenTK.Graphics.OpenGL4;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine
 {
@@ -10,33 +11,56 @@ namespace GameEngine
         private Game game;
         private Stopwatch timer;
 
+        DockPanel dockPanel;
+
+        SceneView sceneView;
+        ObjectHierarchy objectHierarchy;
+        Inspector inspector;
+
         public Editor()
         {
             InitializeComponent();
 
-            game = new Game(glControl1);
+            dockPanel = new DockPanel
+            {
+                Dock = DockStyle.Fill
+            };
+            dockPanel.Theme = new VS2012DarkTheme(); 
+            Controls.Add(dockPanel);
+
+            sceneView = new SceneView();
+            sceneView.Show(dockPanel, DockState.Document);
+
+            game = new Game(sceneView.glControl);
+
+            objectHierarchy = new ObjectHierarchy(game.GameObjectManager);
+            objectHierarchy.Show(dockPanel, DockState.DockLeft);
+
+            inspector = new Inspector();
+            inspector.Show(dockPanel, DockState.DockRight);
+
 
             timer = new Stopwatch();
             timer.Start();
 
-            glControl1.TabStop = true;
+            sceneView.glControl.TabStop = true;
 
-            Load += (s, e) => glControl1.Focus();
+            Load += (s, e) => sceneView.glControl.Focus();
 
-            glControl1.GotFocus += (s, e) => Console.WriteLine("GLControl focused");
-            glControl1.LostFocus += (s, e) => Console.WriteLine("GLControl lost focus");
+            sceneView.glControl.GotFocus += (s, e) => Console.WriteLine("GLControl focused");
+            sceneView.glControl.LostFocus += (s, e) => Console.WriteLine("GLControl lost focus");
 
-            glControl1.Load += GlControl1_Load;
-            glControl1.Paint += GlControl1_Paint;
-            glControl1.Resize += GlControl1_Resize;
+            sceneView.glControl.Load += glControl_Load;
+            sceneView.glControl.Paint += glControl_Paint;
+            sceneView.glControl.Resize += glControl_Resize;
             Application.Idle += Application_Idle;
 
-            glControl1.KeyDown += (s, e) => game.InputHandler.OnKeyDown(e);
-            glControl1.KeyUp += (s, e) => game.InputHandler.OnKeyUp(e);
+            sceneView.glControl.KeyDown += (s, e) => game.InputHandler.OnKeyDown(e);
+            sceneView.glControl.KeyUp += (s, e) => game.InputHandler.OnKeyUp(e);
 
-            glControl1.MouseDown    += (s, e) => game.InputHandler.OnMouseClick(e);
-            glControl1.MouseUp      += (s, e) => game.InputHandler.OnMouseRelease(e);
-            glControl1.MouseMove    += (s, e) => game.InputHandler.OnMouseMove(e);
+            sceneView.glControl.MouseDown += (s, e) => game.InputHandler.OnMouseClick(e);
+            sceneView.glControl.MouseUp += (s, e) => game.InputHandler.OnMouseRelease(e);
+            sceneView.glControl.MouseMove += (s, e) => game.InputHandler.OnMouseMove(e);
         }
 
 
@@ -50,19 +74,19 @@ namespace GameEngine
 
                 game.Update(dt);
                 game.Render();
-                glControl1.SwapBuffers();
+                sceneView.glControl.SwapBuffers();
             }
         }
 
-        private void GlControl1_Load(object? sender, EventArgs e)
+        private void glControl_Load(object? sender, EventArgs e)
         {
-            glControl1.MakeCurrent();
+            sceneView.glControl.MakeCurrent();
             game.Initialize();
         }
 
-        private void GlControl1_Paint(object? sender, PaintEventArgs e)
+        private void glControl_Paint(object? sender, PaintEventArgs e)
         {
-            glControl1.MakeCurrent();
+            sceneView.glControl.MakeCurrent();
 
             float dt = (float)timer.Elapsed.TotalSeconds;
             timer.Restart();
@@ -70,20 +94,20 @@ namespace GameEngine
             game.Update(dt);
             game.Render();
 
-            glControl1.SwapBuffers();
+            sceneView.glControl.SwapBuffers();
         }
 
-        private void GlControl1_Resize(object? sender, EventArgs e)
+        private void glControl_Resize(object? sender, EventArgs e)
         {
-            glControl1.MakeCurrent();
-            game.Resize(glControl1.Width, glControl1.Height);
+            sceneView.glControl.MakeCurrent();
+            game.Resize(sceneView.glControl.Width, sceneView.glControl.Height);
         }
 
-        private void glControl1_Click(object sender, EventArgs e)
+        private void glControl_Click(object sender, EventArgs e)
         {
-            glControl1.Focus();
+            sceneView.glControl.Focus();
         }
-        
+
         [StructLayout(LayoutKind.Sequential)]
         struct NativeMessage
         {
@@ -103,5 +127,6 @@ namespace GameEngine
            uint wMsgFilterMax,
            uint wRemoveMsg
        );
+
     }
 }

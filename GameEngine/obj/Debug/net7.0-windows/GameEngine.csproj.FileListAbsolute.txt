@@ -32,3 +32,8 @@ C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\GameEngine.pdb
 C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\GameEngine.genruntimeconfig.cache
 C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\ref\GameEngine.dll
 C:\dev\Projects\GameEngine\GameEngine\bin\Debug\net7.0-windows\StbImageSharp.dll
+C:\dev\Projects\GameEngine\GameEngine\bin\Debug\net7.0-windows\WeifenLuo.WinFormsUI.Docking.dll
+C:\dev\Projects\GameEngine\GameEngine\bin\Debug\net7.0-windows\WeifenLuo.WinFormsUI.Docking.ThemeVS2012.dll
+C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\GameEngine.SceneView.resources
+C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\GameEngine.ObjectHierarchy.resources
+C:\dev\Projects\GameEngine\GameEngine\obj\Debug\net7.0-windows\GameEngine.Inspector.resources

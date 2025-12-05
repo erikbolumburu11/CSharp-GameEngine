@@ -7,6 +7,8 @@ namespace GameEngine
     {
         int width;
         int height;
+        public float AspectRatio => (float)width / (float)height;
+        
         public int Width => width;
         public int Height => height;
 
@@ -41,9 +43,9 @@ namespace GameEngine
         Vector3 front = -Vector3.UnitZ;
         Vector3 up = Vector3.UnitY;
         Vector3 right = Vector3.UnitX;
-
         public Vector3 Front => front;
         public Vector3 Up => up;
+        public Vector3 Right => right;
 
         Vector2 lastMousePos;
         bool firstMouseMove = true;
@@ -120,6 +122,12 @@ namespace GameEngine
             up = Vector3.Normalize(Vector3.Cross(right, front));
         }
 
+        public void SetAspectRatio(int width, int height)
+        {
+            this.width = width;
+            this.height = height;
+        }
+
         public Matrix4 GetViewMatrix()
         {
             return Matrix4.LookAt(position, position + Front, Up);
@@ -127,7 +135,7 @@ namespace GameEngine
 
         public Matrix4 GetProjectionMatrix(int width, int height)
         {
-            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), width / height, 0.01f, 100.0f);
+            return Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45.0f), AspectRatio, 0.01f, 100.0f);
         }
     }
 }

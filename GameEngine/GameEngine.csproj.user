@@ -4,5 +4,14 @@
     <Compile Update="Editor.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Inspector.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="ObjectHierarchy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="SceneView.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 </Project>
