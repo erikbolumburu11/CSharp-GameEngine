@@ -13,5 +13,8 @@
     <Compile Update="SceneView.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="Vector3Control.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
   </ItemGroup>
 </Project>

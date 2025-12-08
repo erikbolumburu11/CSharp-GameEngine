@@ -8,8 +8,10 @@ namespace GameEngine
     public partial class Editor : Form
     {
 
-        private Game game;
-        private Stopwatch timer;
+        Game game;
+        Stopwatch timer;
+
+        EditorState editorState;
 
         DockPanel dockPanel;
 
@@ -21,9 +23,11 @@ namespace GameEngine
         {
             InitializeComponent();
 
-            dockPanel = new DockPanel
-            {
-                Dock = DockStyle.Fill
+            editorState = new();
+
+            dockPanel = new DockPanel {
+                Dock = DockStyle.Fill,
+                DocumentStyle = DocumentStyle.DockingWindow
             };
             dockPanel.Theme = new VS2012DarkTheme(); 
             Controls.Add(dockPanel);
@@ -33,10 +37,10 @@ namespace GameEngine
 
             game = new Game(sceneView.glControl);
 
-            objectHierarchy = new ObjectHierarchy(game.GameObjectManager);
+            objectHierarchy = new ObjectHierarchy(game.GameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
 
-            inspector = new Inspector();
+            inspector = new Inspector(editorState, game.GameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
 
 

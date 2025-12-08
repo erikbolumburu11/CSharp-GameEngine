@@ -32,6 +32,8 @@ namespace GameEngine
         public Shader shader;
         public Texture texture;
 
+        public event Action<GameObject>? Changed;
+
         public GameObject(string name)
         {
             this.name = name;
@@ -64,6 +66,22 @@ namespace GameEngine
                 Util.cubeVertices,
                 BufferUsageHint.StaticDraw
             );
+        }
+
+        public void SetName(string name)
+        {
+            this.name = name;
+        }
+
+        public void SetPosition(Vector3 position)
+        {
+            transform.position = position;
+            Changed?.Invoke(this);
+        }
+
+        public override string ToString()
+        {
+            return Name;
         }
     }
 }

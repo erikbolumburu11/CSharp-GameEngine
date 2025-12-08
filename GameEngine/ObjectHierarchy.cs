@@ -9,54 +9,86 @@ namespace GameEngine
 {
     public class ObjectHierarchy : DockContent
     {
-        private ListBox listBox;
+        ListBox listBox;
 
         public event Action<string>? GameObjectSelected;
         GameObjectManager gameObjectManager;
+        EditorState editorState;
 
-        public ObjectHierarchy(GameObjectManager gameObjectManager)
+        public ObjectHierarchy(GameObjectManager gameObjectManager, EditorState editorState)
         {
             Text = "Object Hierarchy";
             this.gameObjectManager = gameObjectManager;
+            this.editorState = editorState;
+
+            TableLayoutPanel layout = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+            };
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));         
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));    
+            Controls.Add(layout);
+      
+            Button newCubeButton = new Button();
+            newCubeButton.Text = "New Cube";
+
+            newCubeButton.Click += (s, e) =>
+            {
+                gameObjectManager.CreateCube();
+            };
 
             listBox = new ListBox
             {
                 Dock = DockStyle.Fill,
-                Font = new Font("Segoe UI", 10),
             };
 
             listBox.SelectedIndexChanged += (s, e) =>
             {
-                if (listBox.SelectedItem != null)
-                    GameObjectSelected?.Invoke(listBox.SelectedItem.ToString());
+                SelectObject();
             };
 
-            Controls.Add(listBox);
+            layout.Controls.Add(newCubeButton);
+            layout.Controls.Add(listBox);
 
             gameObjectManager.GameObjectAdded += GameObjectAdded;
             gameObjectManager.GameObjectRemoved += GameObjectRemoved;
+            gameObjectManager.GameObjectChanged += GameObjectChanged;
         }
 
-        private void GameObjectRemoved(GameObject @object)
+        private void GameObjectRemoved(GameObject obj)
         {
             throw new NotImplementedException();
         }
 
-        private void GameObjectAdded(GameObject @object)
+        private void GameObjectAdded(GameObject obj)
         {
-            SetGameObjects(gameObjectManager.gameObjects.Select(gameObject => gameObject.Name));
+            SetGameObjects(gameObjectManager.gameObjects);
         }
 
-        public void SetGameObjects(IEnumerable<string> objects)
+        private void GameObjectChanged(GameObject obj)
+        {
+            int index = listBox.Items.IndexOf(obj);
+            if (index >= 0)
+            {
+                listBox.Items[index] = listBox.Items[index]; 
+            }
+        }
+
+        public void SetGameObjects(IEnumerable<GameObject> objects)
         {
             listBox.Items.Clear();
-            foreach (var obj in objects)
+            foreach (GameObject obj in objects)
                 listBox.Items.Add(obj);
         }
 
-        public void SelectObject(string name)
+        public void SelectObject()
         {
-            listBox.SelectedItem = name;
+            if(listBox.SelectedItem is GameObject gameObject)
+            {
+                editorState.Select(gameObject);
+            }
         }
     }
 }
