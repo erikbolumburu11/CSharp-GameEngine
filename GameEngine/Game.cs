@@ -36,7 +36,7 @@ namespace GameEngine
             gameObjectManager = new GameObjectManager();
             input = new InputHandler();
             camera = new EditorCamera(new Vector3(0, 0, 3), 1f, 0.2f, width, height, input);
-            renderer = new Renderer(camera, width, height);
+            renderer = new Renderer();
         }
 
         public void Initialize()

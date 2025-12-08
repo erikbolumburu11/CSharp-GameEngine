@@ -8,13 +8,6 @@ namespace GameEngine
         Matrix4 view;
         Matrix4 projection;
 
-        EditorCamera camera;
-
-        public Renderer(EditorCamera camera, int width, int height)
-        {
-            this.camera = camera;
-        }
-
         public void Render(GameObjectManager gameObjectManager, EditorCamera camera)
         {
             view = camera.GetViewMatrix();
