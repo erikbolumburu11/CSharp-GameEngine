@@ -30,7 +30,6 @@ namespace GameEngine
                 shader.SetMatrix4("projection", projection);
                 shader.Use();
 
-                gameObject.texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
                 gameObject.texture.Use(TextureUnit.Texture0);
 
                 GL.BindVertexArray(gameObject.VertexArrayObject);
