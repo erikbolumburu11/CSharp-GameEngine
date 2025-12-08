@@ -1,14 +1,15 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using GameEngine.Editor;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
-namespace GameEngine
+namespace GameEngine.Engine
 {
     public class Renderer
     {
         Matrix4 view;
         Matrix4 projection;
 
-        public void Render(GameObjectManager gameObjectManager, EditorCamera camera)
+        public void Render(GameObjectManager gameObjectManager, Camera camera)
         {
             view = camera.GetViewMatrix();
             projection = camera.GetProjectionMatrix(camera.Width, camera.Height);

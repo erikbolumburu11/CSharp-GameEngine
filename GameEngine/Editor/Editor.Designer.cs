@@ -1,6 +1,6 @@
 ﻿using WeifenLuo.WinFormsUI.Docking;
 
-namespace GameEngine
+namespace GameEngine.Editor
 {
     partial class Editor
     {

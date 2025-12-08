@@ -1,11 +1,12 @@
-﻿using System;
+﻿using GameEngine.Engine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WeifenLuo.WinFormsUI.Docking;
 
-namespace GameEngine
+namespace GameEngine.Editor
 {
     public class ObjectHierarchy : DockContent
     {

@@ -1,4 +1,4 @@
-﻿namespace GameEngine
+﻿namespace GameEngine.Editor
 {
     public class InputHandler
     {

@@ -2,7 +2,7 @@
 using OpenTK.Mathematics;
 using System;
 
-namespace GameEngine
+namespace GameEngine.Engine
 {
 
     public class Transform

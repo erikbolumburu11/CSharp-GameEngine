@@ -1,15 +1,20 @@
+using GameEngine.Engine;
 using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using WeifenLuo.WinFormsUI.Docking;
 
-namespace GameEngine
+namespace GameEngine.Editor
 {
     public partial class Editor : Form
     {
 
         Game game;
         Stopwatch timer;
+
+        InputHandler inputHandler;
+        EditorCamera camera;
 
         EditorState editorState;
 
@@ -21,10 +26,6 @@ namespace GameEngine
 
         public Editor()
         {
-            InitializeComponent();
-
-            editorState = new();
-
             dockPanel = new DockPanel {
                 Dock = DockStyle.Fill,
                 DocumentStyle = DocumentStyle.DockingWindow
@@ -35,7 +36,11 @@ namespace GameEngine
             sceneView = new SceneView();
             sceneView.Show(dockPanel, DockState.Document);
 
-            game = new Game(sceneView.glControl);
+            game = new Game();
+
+            inputHandler = new();
+            camera = new EditorCamera(new Vector3(0, 0, 6), 0.5f, 1.5f, inputHandler, sceneView.Width, sceneView.Height);
+            editorState = new();
 
             objectHierarchy = new ObjectHierarchy(game.GameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
@@ -59,12 +64,12 @@ namespace GameEngine
             sceneView.glControl.Resize += glControl_Resize;
             Application.Idle += Application_Idle;
 
-            sceneView.glControl.KeyDown += (s, e) => game.InputHandler.OnKeyDown(e);
-            sceneView.glControl.KeyUp += (s, e) => game.InputHandler.OnKeyUp(e);
+            sceneView.glControl.KeyDown += (s, e) => inputHandler.OnKeyDown(e);
+            sceneView.glControl.KeyUp += (s, e) => inputHandler.OnKeyUp(e);
 
-            sceneView.glControl.MouseDown += (s, e) => game.InputHandler.OnMouseClick(e);
-            sceneView.glControl.MouseUp += (s, e) => game.InputHandler.OnMouseRelease(e);
-            sceneView.glControl.MouseMove += (s, e) => game.InputHandler.OnMouseMove(e);
+            sceneView.glControl.MouseDown += (s, e) => inputHandler.OnMouseClick(e);
+            sceneView.glControl.MouseUp += (s, e) => inputHandler.OnMouseRelease(e);
+            sceneView.glControl.MouseMove += (s, e) => inputHandler.OnMouseMove(e);
         }
 
 
@@ -77,7 +82,8 @@ namespace GameEngine
                 timer.Restart();
 
                 game.Update(dt);
-                game.Render();
+                camera.Update(inputHandler, dt);
+                game.Render(camera);
                 sceneView.glControl.SwapBuffers();
             }
         }
@@ -96,7 +102,8 @@ namespace GameEngine
             timer.Restart();
 
             game.Update(dt);
-            game.Render();
+            camera.Update(inputHandler, dt);
+            game.Render(camera);
 
             sceneView.glControl.SwapBuffers();
         }
@@ -104,7 +111,8 @@ namespace GameEngine
         private void glControl_Resize(object? sender, EventArgs e)
         {
             sceneView.glControl.MakeCurrent();
-            game.Resize(sceneView.glControl.Width, sceneView.glControl.Height);
+            GL.Viewport(0, 0, sceneView.Width, sceneView.Height);
+            camera.SetAspectRatio(sceneView.Width, sceneView.Height);
         }
 
         private void glControl_Click(object sender, EventArgs e)

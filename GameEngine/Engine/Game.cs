@@ -1,41 +1,26 @@
-﻿using OpenTK.GLControl;
+﻿using GameEngine.Editor;
+using OpenTK.GLControl;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System.Diagnostics;
 
-namespace GameEngine
+namespace GameEngine.Engine
 {
     public class Game
     {
-        GLControl glControl;
-
-        private int width;
-        private int height;
-
-        InputHandler input;
-        public InputHandler InputHandler => input;
-
         GameObjectManager gameObjectManager;
         public GameObjectManager GameObjectManager => gameObjectManager;
 
         Renderer renderer;
-        EditorCamera camera;
 
         Stopwatch time;
 
-        public Game(GLControl glControl)
+        public Game()
         {
-            this.glControl = glControl;
-
-            width = glControl.Width;
-            height = glControl.Height;
-
             time = new Stopwatch();
             time.Start();
 
             gameObjectManager = new GameObjectManager();
-            input = new InputHandler();
-            camera = new EditorCamera(new Vector3(0, 0, 3), 1f, 0.2f, width, height, input);
             renderer = new Renderer();
         }
 
@@ -45,20 +30,11 @@ namespace GameEngine
             GameObject cube = gameObjectManager.CreateCube();
         }
 
-        public void Resize(int width, int height)
-        {
-            this.width = width;
-            this.height = height;
-            GL.Viewport(0, 0, width, height);
-            camera.SetAspectRatio(width, height);
-        }
-
         public void Update(float deltaTime)
         {
-            camera.Update(input, deltaTime);
         }
 
-        public void Render()
+        public void Render(Camera camera)
         {
             GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);

@@ -1,4 +1,4 @@
-﻿namespace GameEngine
+﻿namespace GameEngine.Engine
 {
     public class GameObjectManager
     {
