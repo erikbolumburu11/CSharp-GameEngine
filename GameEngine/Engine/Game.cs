@@ -1,4 +1,5 @@
 ﻿using GameEngine.Editor;
+using GameEngine.Engine.Components;
 using OpenTK.GLControl;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -8,8 +9,7 @@ namespace GameEngine.Engine
 {
     public class Game
     {
-        GameObjectManager gameObjectManager;
-        public GameObjectManager GameObjectManager => gameObjectManager;
+        public GameObjectManager gameObjectManager { get; private set; }
 
         Renderer renderer;
 
@@ -32,6 +32,13 @@ namespace GameEngine.Engine
 
         public void Update(float deltaTime)
         {
+            foreach (GameObject gameObject in gameObjectManager.gameObjects)
+                {
+                    foreach (var component in gameObject.Components)
+                    {
+                        component.Update(deltaTime);
+                    }
+                }
         }
 
         public void Render(Camera camera)

@@ -18,7 +18,6 @@ namespace GameEngine.Editor
 
         EditorState editorState;
 
-        DockPanel dockPanel;
 
         SceneView sceneView;
         ObjectHierarchy objectHierarchy;
@@ -26,12 +25,9 @@ namespace GameEngine.Editor
 
         public Editor()
         {
-            dockPanel = new DockPanel {
-                Dock = DockStyle.Fill,
-                DocumentStyle = DocumentStyle.DockingWindow
-            };
-            dockPanel.Theme = new VS2012DarkTheme(); 
-            Controls.Add(dockPanel);
+            InitializeComponent();
+
+            dockPanel.Theme = new VS2012DarkTheme();
 
             sceneView = new SceneView();
             sceneView.Show(dockPanel, DockState.Document);
@@ -42,12 +38,11 @@ namespace GameEngine.Editor
             camera = new EditorCamera(new Vector3(0, 0, 6), 0.5f, 1.5f, inputHandler, sceneView.Width, sceneView.Height);
             editorState = new();
 
-            objectHierarchy = new ObjectHierarchy(game.GameObjectManager, editorState);
+            objectHierarchy = new ObjectHierarchy(game.gameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
 
-            inspector = new Inspector(editorState, game.GameObjectManager);
+            inspector = new Inspector(editorState, game.gameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
-
 
             timer = new Stopwatch();
             timer.Start();
@@ -140,5 +135,24 @@ namespace GameEngine.Editor
            uint wRemoveMsg
        );
 
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dialog = new SaveFileDialog();
+            dialog.Filter = "Scene Files (*.scene)|*.scene";
+            if (dialog.ShowDialog() == DialogResult.OK)
+                SceneSerializer.SaveScene(game.gameObjectManager, dialog.FileName);
+        }
+
+        private void loadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dialog = new OpenFileDialog();
+            dialog.Filter = "Scene Files (*.scene)|*.scene";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                SceneSerializer.LoadScene(game.gameObjectManager, dialog.FileName);
+                objectHierarchy.RefreshList();
+                sceneView.Refresh();
+            }
+        }
     }
 }

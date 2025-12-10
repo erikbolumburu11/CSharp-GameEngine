@@ -39,6 +39,7 @@ namespace GameEngine.Editor
             };
             Controls.Add(layout);
 
+
             // NAME FIELD
             nameTextBox = new TextBox { Width = 150 };
             Control nameRow = CreateLabeledRow("Name:", nameTextBox);
@@ -48,6 +49,47 @@ namespace GameEngine.Editor
             positionControl = new Vector3Control();
             Control posRow = CreateLabeledRow("Position:", positionControl);
             layout.Controls.Add(posRow);
+
+            //TODO: Components and Fields
+
+            layout.Controls.Add(CreateAddComponentButton());
+
+        }
+
+        private Button CreateAddComponentButton()
+        {
+            ContextMenuStrip cms = new ContextMenuStrip();
+
+            foreach (Type componentType in ComponentTypeRegistry.Types.Values)
+            {
+                if (Equals(typeof(Component), componentType)) continue;
+
+                ToolStripMenuItem componentMenuItem = new ToolStripMenuItem
+                (
+                    componentType.Name,
+                    null,
+                    (s, e) =>
+                    {
+                        editorState.SelectedObject.AddComponent(componentType);
+                    },
+                    componentType.Name
+               );
+
+                cms.Items.Add(componentMenuItem);
+            }
+
+            Button button = new Button
+            {
+                Text = "Add Component",
+                Width = 150
+            };
+
+            button.Click += (s, e) =>
+            {
+                cms.Show(button.Location);
+            };
+
+            return button;
         }
 
         private Control CreateLabeledRow(string labelText, Control input)
@@ -94,7 +136,7 @@ namespace GameEngine.Editor
                 return;
             }
 
-            nameTextBox.Text = obj.Name;
+            nameTextBox.Text = obj.name;
             positionControl.SetValues(obj.transform.position);
         }
     }

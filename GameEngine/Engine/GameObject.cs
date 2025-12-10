@@ -4,7 +4,6 @@ using System;
 
 namespace GameEngine.Engine
 {
-
     public class Transform
     {
         public Vector3 position;
@@ -21,53 +20,57 @@ namespace GameEngine.Engine
 
     public class GameObject
     {
-        string name;
-        public string Name => name;
+        public string name { get; private set; }
 
         public Transform transform;
 
-        int VertexBufferObject;
-        public int VertexArrayObject;
-
-        public Shader shader;
-        public Texture texture;
-
         public event Action<GameObject>? Changed;
+
+        private List<Component> components;
+        public IReadOnlyList<Component> Components => components;
 
         public GameObject(string name)
         {
+            components = new();
+
             this.name = name;
 
             transform = new();
-
-            CreateBuffers();
-
-            shader = new Shader(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
-
-            int vertexLocation = shader.GetAttribLocation("aPosition");
-            GL.EnableVertexAttribArray(vertexLocation);
-            GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
-
-            int texCoordLocation = shader.GetAttribLocation("aTexCoord");
-            GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
-
-            texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
         }
 
-        void CreateBuffers()
+        // TODO: Dont add copmonent if one of type already exists.
+        public Component AddComponent(Component component)
         {
-            VertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(VertexArrayObject);
+            component.gameObject = this;
+            components.Add(component);
+            component.Start();
+            return component;
+        }
 
-            VertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-            GL.BufferData(
-                BufferTarget.ArrayBuffer,
-                Util.cubeVertices.Length * sizeof(float),
-                Util.cubeVertices,
-                BufferUsageHint.StaticDraw
-            );
+        public T AddComponent<T>() where T : Component, new()
+        {
+            var component = new T();
+            AddComponent(component);
+            return component;
+        }
+
+        public Component AddComponent(Type type)
+        {
+            if (!typeof(Component).IsAssignableFrom(type))
+            {
+                throw new ArgumentException("Type must be a Component", nameof(type));
+            }
+
+            var component = (Component)Activator.CreateInstance(type)!;
+
+            AddComponent(component);
+
+            return component;
+        }
+
+        public T? GetComponent<T>() where T : Component
+        {
+            return components.OfType<T>().FirstOrDefault();
         }
 
         public void SetName(string name)
@@ -83,7 +86,7 @@ namespace GameEngine.Engine
 
         public override string ToString()
         {
-            return Name;
+            return name;
         }
     }
 }

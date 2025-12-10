@@ -26,18 +26,27 @@ namespace GameEngine.Editor
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 2,
+                RowCount = 3,
             };
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));         
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));         
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));    
             Controls.Add(layout);
       
-            Button newCubeButton = new Button();
+            Button newCubeButton = new Button { Width = 150 };
             newCubeButton.Text = "New Cube";
 
             newCubeButton.Click += (s, e) =>
             {
                 gameObjectManager.CreateCube();
+            };
+
+            Button newGameObjectButton = new Button { Width = 150 };
+            newGameObjectButton.Text = "New GameObject";
+
+            newGameObjectButton.Click += (s, e) =>
+            {
+                gameObjectManager.CreateGameObject();
             };
 
             listBox = new ListBox
@@ -51,11 +60,19 @@ namespace GameEngine.Editor
             };
 
             layout.Controls.Add(newCubeButton);
+            layout.Controls.Add(newGameObjectButton);
             layout.Controls.Add(listBox);
 
             gameObjectManager.GameObjectAdded += GameObjectAdded;
             gameObjectManager.GameObjectRemoved += GameObjectRemoved;
             gameObjectManager.GameObjectChanged += GameObjectChanged;
+        }
+
+        public void RefreshList()
+        {
+            listBox.Items.Clear();
+            foreach (GameObject obj in gameObjectManager.gameObjects)
+                listBox.Items.Add(obj);
         }
 
         private void GameObjectRemoved(GameObject obj)

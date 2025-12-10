@@ -1,4 +1,6 @@
-﻿namespace GameEngine.Engine
+﻿using GameEngine.Engine.Components;
+
+namespace GameEngine.Engine
 {
     public class GameObjectManager
     {
@@ -13,13 +15,30 @@
             gameObjects = new();
         }
 
+        public GameObject CreateGameObject()
+        {
+            return CreateGameObject("New GameObject");
+        }
+
+        public GameObject CreateGameObject(string name)
+        {
+            GameObject gameObject = new GameObject(name);
+            gameObjects.Add(gameObject);
+            GameObjectAdded?.Invoke(gameObject);
+            gameObject.Changed += OnObjectChanged;
+            return gameObject;
+        }
+
         public GameObject CreateCube()
         {
-            GameObject cube = new("Cube");
-            gameObjects.Add(cube);
-            GameObjectAdded?.Invoke(cube);
-            cube.Changed += OnObjectChanged;
+            GameObject cube = CreateGameObject("Cube");
+            cube.AddComponent<MeshRenderer>();
             return cube;
+        }
+
+        public void Clear()
+        {
+            gameObjects = new();
         }
 
         public void RenameGameObject(GameObject gameObject, string newName)

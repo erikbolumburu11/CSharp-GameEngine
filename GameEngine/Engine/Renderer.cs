@@ -1,4 +1,5 @@
 ﻿using GameEngine.Editor;
+using GameEngine.Engine.Components;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -15,18 +16,21 @@ namespace GameEngine.Engine
             projection = camera.GetProjectionMatrix(camera.Width, camera.Height);
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
+                MeshRenderer? meshRenderer = gameObject.GetComponent<MeshRenderer>();
+                if (meshRenderer == null) return;
+
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
 
-                Shader shader = gameObject.shader;
+                Shader shader = meshRenderer.shader;
 
                 shader.SetMatrix4("model", model);
                 shader.SetMatrix4("view", view);
                 shader.SetMatrix4("projection", projection);
                 shader.Use();
 
-                gameObject.texture.Use(TextureUnit.Texture0);
+                meshRenderer.texture.Use(TextureUnit.Texture0);
 
-                GL.BindVertexArray(gameObject.VertexArrayObject);
+                GL.BindVertexArray(meshRenderer.VertexArrayObject);
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
             }
         }
