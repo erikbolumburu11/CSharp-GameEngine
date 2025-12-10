@@ -1,4 +1,5 @@
 ﻿using GameEngine.Engine;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,13 @@ namespace GameEngine.Editor
         private readonly EditorState editorState;
         private readonly GameObjectManager gameObjectManager;
 
+        FlowLayoutPanel layout;
+
         private TextBox nameTextBox;
+
         private Vector3Control positionControl;
+        private Vector3Control rotationControl;
+        private Vector3Control scaleControl;
 
         public Inspector(EditorState editorState, GameObjectManager gameObjectManager)
         {
@@ -30,15 +36,14 @@ namespace GameEngine.Editor
         private void InitializeUI()
         {
             // Main vertical layout
-            var layout = new FlowLayoutPanel
+            layout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 AutoScroll = true,
-                WrapContents = false
+                WrapContents = false,
             };
             Controls.Add(layout);
-
 
             // NAME FIELD
             nameTextBox = new TextBox { Width = 150 };
@@ -50,10 +55,21 @@ namespace GameEngine.Editor
             Control posRow = CreateLabeledRow("Position:", positionControl);
             layout.Controls.Add(posRow);
 
+            // ROTATION FIELD
+            rotationControl = new Vector3Control();
+            Control rotRow = CreateLabeledRow("Rotation:", rotationControl);
+            layout.Controls.Add(rotRow);
+
+            // SCALE FIELD
+            scaleControl = new Vector3Control();
+            Control scaleRow = CreateLabeledRow("Scale:", scaleControl);
+            layout.Controls.Add(scaleRow);
+
             //TODO: Components and Fields
 
             layout.Controls.Add(CreateAddComponentButton());
 
+            layout.Hide();
         }
 
         private Button CreateAddComponentButton()
@@ -124,6 +140,22 @@ namespace GameEngine.Editor
                 obj.SetPosition(vector);
             };
 
+            rotationControl.ValueChanged += (vector) =>
+            {
+                var obj = editorState.SelectedObject;
+                if (obj == null) return;
+
+                obj.SetRotation(vector);
+            };
+
+            scaleControl.ValueChanged += (vector) =>
+            {
+                var obj = editorState.SelectedObject;
+                if (obj == null) return;
+
+                obj.SetScale(vector);
+            };
+
             editorState.OnSelectionChanged += UpdateInspectorFields;
         }
 
@@ -131,13 +163,28 @@ namespace GameEngine.Editor
         {
             if (obj == null)
             {
+                layout.Hide();
+
                 nameTextBox.Text = "";
-                positionControl.SetValues(new OpenTK.Mathematics.Vector3());
+
+                positionControl.SetValues(new Vector3());
+                rotationControl.SetValues(new Vector3());
+                scaleControl.SetValues(new Vector3());
+
                 return;
             }
 
+            layout.Show();
+
             nameTextBox.Text = obj.name;
+
             positionControl.SetValues(obj.transform.position);
+
+            Vector3 euler;
+            Quaternion.ToEulerAngles(obj.transform.rotation, out euler);
+            rotationControl.SetValues(euler);
+
+            scaleControl.SetValues(obj.transform.scale);
         }
     }
 }

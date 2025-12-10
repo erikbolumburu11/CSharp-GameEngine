@@ -1,6 +1,8 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System;
+using System.CodeDom;
+using System.ComponentModel;
 
 namespace GameEngine.Engine
 {
@@ -38,9 +40,15 @@ namespace GameEngine.Engine
             transform = new();
         }
 
-        // TODO: Dont add copmonent if one of type already exists.
-        public Component AddComponent(Component component)
+        public Component? AddComponent(Component component)
         {
+            if (HasComponent(component.GetType()))
+            {
+                // TODO: Add to log when logging is implemented.
+                Console.WriteLine($"Component of Type: {component.GetType()} already exists!");
+                return null;
+            }
+
             component.gameObject = this;
             components.Add(component);
             component.Start();
@@ -73,6 +81,23 @@ namespace GameEngine.Engine
             return components.OfType<T>().FirstOrDefault();
         }
 
+        public bool HasComponent<T>() where T : Component
+        {
+            if (components.OfType<T>().Count() > 0) return true;
+
+            return false;
+        }
+
+        public bool HasComponent(Type type)
+        {
+            if (!typeof(Component).IsAssignableFrom(type))
+            {
+                throw new ArgumentException("Type must be a Component", nameof(type));
+            }
+
+            return components.Any(c => type.IsAssignableFrom(c.GetType()));
+        }
+
         public void SetName(string name)
         {
             this.name = name;
@@ -81,6 +106,18 @@ namespace GameEngine.Engine
         public void SetPosition(Vector3 position)
         {
             transform.position = position;
+            Changed?.Invoke(this);
+        }
+
+        public void SetRotation(Vector3 rotation)
+        {
+            transform.rotation = Quaternion.FromEulerAngles(rotation);
+            Changed?.Invoke(this);
+        }
+
+        public void SetScale(Vector3 scale)
+        {
+            transform.scale = scale;
             Changed?.Invoke(this);
         }
 

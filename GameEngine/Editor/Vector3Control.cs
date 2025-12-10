@@ -15,7 +15,6 @@ namespace GameEngine.Editor
 
         public event Action<Vector3>? ValueChanged;
 
-
         public Vector3Control()
         {
 
