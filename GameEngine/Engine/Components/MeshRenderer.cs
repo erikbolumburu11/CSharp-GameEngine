@@ -9,9 +9,8 @@ namespace GameEngine.Engine.Components
 {
     public class MeshRenderer : Component, IComponentSerializable
     {
-
-        int VertexBufferObject;
-        public int VertexArrayObject;
+        public VertexArray vao { get; private set; }
+        public VertexBuffer<float> vbo { get; private set; }
 
         public Shader shader;
         public Texture texture;
@@ -28,23 +27,18 @@ namespace GameEngine.Engine.Components
 
         void CreateBuffers()
         {
-            VertexArrayObject = GL.GenVertexArray();
-            GL.BindVertexArray(VertexArrayObject);
-
-            VertexBufferObject = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);
-            GL.BufferData(
-                BufferTarget.ArrayBuffer,
-                Util.cubeVertices.Length * sizeof(float),
-                Util.cubeVertices,
-                BufferUsageHint.StaticDraw
-            );
+            vao = new VertexArray();
+            vbo = new VertexBuffer<float>(Util.cubeVertices);
         }
 
         // TODO: Shaders should be in a dictionary or something to avoid creating the same shader
         //       multiple times
         void CreateShader()
         {
+
+            vao.Bind();
+            vbo.Bind();
+
             shader = new Shader(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
 
             int vertexLocation = shader.GetAttribLocation("aPosition");
@@ -54,6 +48,9 @@ namespace GameEngine.Engine.Components
             int texCoordLocation = shader.GetAttribLocation("aTexCoord");
             GL.EnableVertexAttribArray(texCoordLocation);
             GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+
+            vbo.Unbind();
+            vao.Unbind();
         }
 
         // TODO: Textures should be in a dictionary or something to avoid creating the same texture

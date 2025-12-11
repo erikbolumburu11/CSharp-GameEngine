@@ -19,6 +19,7 @@ namespace GameEngine.Engine
 
         public Game()
         {
+
             time = new Stopwatch();
             time.Start();
 
@@ -34,6 +35,9 @@ namespace GameEngine.Engine
         {
             GL.Enable(EnableCap.DepthTest);
             GameObject cube = gameObjectManager.CreateCube();
+
+            Console.WriteLine("GL Version: " + GL.GetString(StringName.Version));
+            Console.WriteLine("GLSL Version: " + GL.GetString(StringName.ShadingLanguageVersion));
         }
 
         public void Update(float deltaTime)

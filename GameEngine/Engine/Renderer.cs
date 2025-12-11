@@ -30,8 +30,9 @@ namespace GameEngine.Engine
 
                 meshRenderer.texture.Use(TextureUnit.Texture0);
 
-                GL.BindVertexArray(meshRenderer.VertexArrayObject);
+                meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+                meshRenderer.vao.Unbind();
             }
         }
 
