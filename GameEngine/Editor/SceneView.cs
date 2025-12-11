@@ -19,7 +19,8 @@ namespace GameEngine.Editor
             glControl = new GLControl
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Black
+                BackColor = Color.Black,
+                APIVersion = new Version(4, 6)
             };
 
             CloseButton = false;

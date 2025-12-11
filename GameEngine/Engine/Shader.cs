@@ -10,7 +10,7 @@ namespace GameEngine.Engine
 {
     public class Shader : IDisposable
     {
-        int Handle;
+        public int Handle { get; private set; }
 
         Dictionary<string, int> uniformLocations;
 

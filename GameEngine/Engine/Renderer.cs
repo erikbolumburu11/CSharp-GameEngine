@@ -10,8 +10,13 @@ namespace GameEngine.Engine
         Matrix4 view;
         Matrix4 projection;
 
-        public void Render(GameObjectManager gameObjectManager, Camera camera)
+        public void Render(GameObjectManager gameObjectManager, LightManager lightManager, Camera camera)
         {
+            lightManager.lights.Clear();
+            lightManager.lights = gameObjectManager.GetAllComponents<Light>();
+
+            lightManager.UploadLights();
+
             view = camera.GetViewMatrix();
             projection = camera.GetProjectionMatrix(camera.Width, camera.Height);
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
@@ -22,6 +27,8 @@ namespace GameEngine.Engine
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
 
                 Shader shader = meshRenderer.shader;
+                int lightCountLocation = GL.GetUniformLocation(shader.Handle, "lightCount");
+                GL.Uniform1(lightCountLocation, lightManager.lights.Count);
 
                 shader.SetMatrix4("model", model);
                 shader.SetMatrix4("view", view);

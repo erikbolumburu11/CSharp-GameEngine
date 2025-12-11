@@ -11,6 +11,7 @@ namespace GameEngine.Engine
     {
         public GameObjectManager gameObjectManager { get; private set; }
 
+        LightManager lightManager;
         Renderer renderer;
 
         Stopwatch time;
@@ -19,12 +20,11 @@ namespace GameEngine.Engine
 
         public Game()
         {
-
             time = new Stopwatch();
             time.Start();
 
             gameObjectManager = new GameObjectManager();
-            renderer = new Renderer();
+
             scene = new Scene
             {
                 ambientLightIntensity = 1f
@@ -33,6 +33,9 @@ namespace GameEngine.Engine
 
         public void Initialize()
         {
+            lightManager = new();
+            renderer = new Renderer();
+
             GL.Enable(EnableCap.DepthTest);
             GameObject cube = gameObjectManager.CreateCube();
 
@@ -56,7 +59,7 @@ namespace GameEngine.Engine
             GL.ClearColor(scene.skyboxColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            renderer.Render(gameObjectManager, camera);
+            renderer.Render(gameObjectManager, lightManager, camera);
         }
     }
 }

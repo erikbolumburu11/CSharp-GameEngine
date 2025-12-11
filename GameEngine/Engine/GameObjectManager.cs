@@ -6,9 +6,9 @@ namespace GameEngine.Engine
     {
         public List<GameObject> gameObjects;
 
-        public event Action<GameObject> GameObjectAdded;
-        public event Action<GameObject> GameObjectRemoved;
-        public event Action<GameObject> GameObjectChanged;
+        public event Action<GameObject>? GameObjectAdded;
+        public event Action<GameObject>? GameObjectRemoved;
+        public event Action<GameObject>? GameObjectChanged;
 
         public GameObjectManager()
         {
@@ -34,6 +34,20 @@ namespace GameEngine.Engine
             GameObject cube = CreateGameObject("Cube");
             cube.AddComponent<MeshRenderer>();
             return cube;
+        }
+
+        public List<T> GetAllComponents<T>() where T : Component
+        {
+            List<T> results = new List<T>();
+
+            foreach (var go in gameObjects)
+            {
+                var component = go.GetComponent<T>();
+                if (component != null)
+                    results.Add(component);
+            }
+
+            return results;
         }
 
         public void Clear()
