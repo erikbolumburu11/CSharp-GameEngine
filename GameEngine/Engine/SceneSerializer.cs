@@ -17,7 +17,7 @@ namespace GameEngine.Engine
             IncludeFields = true
         };
 
-        public static void SaveScene(GameObjectManager gameObjectManager, string path)
+        public static void SaveScene(GameObjectManager gameObjectManager, Scene gameScene, string path)
         {
             SceneData scene = new();
 
@@ -46,6 +46,12 @@ namespace GameEngine.Engine
                 scene.gameObjects.Add(gameObjectData);
             }
 
+            scene.ambientLightIntensity = gameScene.ambientLightIntensity;
+
+            scene.skyboxColorR = gameScene.skyboxColor.R;
+            scene.skyboxColorG = gameScene.skyboxColor.G;
+            scene.skyboxColorB = gameScene.skyboxColor.B;
+
             string json = JsonSerializer.Serialize(scene, options);
 
             Console.WriteLine("Saving " + scene.gameObjects.Count + " objects");
@@ -70,7 +76,7 @@ namespace GameEngine.Engine
             return componentData;
         }
 
-        public static void LoadScene(GameObjectManager gameObjectManager, string path)
+        public static void LoadScene(GameObjectManager gameObjectManager, Scene gameScene, string path)
         {
             string json = File.ReadAllText(path);
             SceneData scene = JsonSerializer.Deserialize<SceneData>(json, options);
@@ -104,6 +110,9 @@ namespace GameEngine.Engine
 
                 DeserializeComponents(gameObject, data.components);
             }
+
+            gameScene.ambientLightIntensity = scene.ambientLightIntensity;
+            gameScene.skyboxColor = Color.FromArgb(255, scene.skyboxColorR, scene.skyboxColorG, scene.skyboxColorB);
         }
 
         private static void DeserializeComponents(GameObject gameObject, List<ComponentData> components)
@@ -125,6 +134,12 @@ namespace GameEngine.Engine
 public class SceneData
 {
     public List<GameObjectData> gameObjects = new();
+
+    public float ambientLightIntensity;
+
+    public int skyboxColorR;
+    public int skyboxColorG;
+    public int skyboxColorB;
 }
 
 public class GameObjectData

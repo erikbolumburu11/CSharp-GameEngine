@@ -36,12 +36,13 @@ namespace GameEngine.Editor
             saveToolStripMenuItem = new ToolStripMenuItem();
             loadToolStripMenuItem = new ToolStripMenuItem();
             dockPanel = new DockPanel();
+            sceneSettingsButton = new ToolStripButton();
             toolStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { File });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { File, sceneSettingsButton });
             toolStrip1.Location = new Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(800, 25);
@@ -75,18 +76,29 @@ namespace GameEngine.Editor
             // dockPanel
             // 
             dockPanel.Dock = DockStyle.Fill;
-            dockPanel.Location = new Point(0, 0);
+            dockPanel.Location = new Point(0, 25);
             dockPanel.Name = "dockPanel";
-            dockPanel.Size = new Size(800, 450);
+            dockPanel.Size = new Size(800, 425);
             dockPanel.TabIndex = 1;
+            // 
+            // sceneSettingsButton
+            // 
+            sceneSettingsButton.DisplayStyle = ToolStripItemDisplayStyle.Text;
+            sceneSettingsButton.Image = (Image)resources.GetObject("sceneSettingsButton.Image");
+            sceneSettingsButton.ImageTransparentColor = Color.Magenta;
+            sceneSettingsButton.Name = "sceneSettingsButton";
+            sceneSettingsButton.Size = new Size(87, 22);
+            sceneSettingsButton.Text = "Scene Settings";
+            sceneSettingsButton.ToolTipText = "Scene Settings";
+            sceneSettingsButton.Click += sceneSettingsButton_Click;
             // 
             // Editor
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(toolStrip1);
             Controls.Add(dockPanel);
+            Controls.Add(toolStrip1);
             Name = "Editor";
             Text = "Editor";
             toolStrip1.ResumeLayout(false);
@@ -102,5 +114,6 @@ namespace GameEngine.Editor
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem loadToolStripMenuItem;
         private DockPanel dockPanel;
+        private ToolStripButton sceneSettingsButton;
     }
 }

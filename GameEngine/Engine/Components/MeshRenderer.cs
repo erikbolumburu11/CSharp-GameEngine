@@ -16,6 +16,8 @@ namespace GameEngine.Engine.Components
         public Shader shader;
         public Texture texture;
 
+        [ExposeInInspector] float inspectorTestFloat;
+
         public override void Start()
         {
             base.Start();

@@ -15,6 +15,8 @@ namespace GameEngine.Engine
 
         Stopwatch time;
 
+        public Scene scene;
+
         public Game()
         {
             time = new Stopwatch();
@@ -22,6 +24,10 @@ namespace GameEngine.Engine
 
             gameObjectManager = new GameObjectManager();
             renderer = new Renderer();
+            scene = new Scene
+            {
+                ambientLightIntensity = 1f
+            };
         }
 
         public void Initialize()
@@ -43,7 +49,7 @@ namespace GameEngine.Engine
 
         public void Render(Camera camera)
         {
-            GL.ClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            GL.ClearColor(scene.skyboxColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderer.Render(gameObjectManager, camera);

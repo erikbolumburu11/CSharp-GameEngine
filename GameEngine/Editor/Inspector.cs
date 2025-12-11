@@ -1,10 +1,7 @@
 ﻿using GameEngine.Engine;
+using GameEngine.Engine.Components;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine.Editor
@@ -69,7 +66,79 @@ namespace GameEngine.Editor
 
             layout.Controls.Add(CreateAddComponentButton());
 
+
             layout.Hide();
+        }
+
+        private FlowLayoutPanel CreateComponentList()
+        {
+            FlowLayoutPanel layout = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.TopDown,
+                AutoScroll = true,
+                WrapContents = false,
+            };
+
+            foreach (Component comp in editorState.SelectedObject.Components)
+            {
+                Label componentLabel = new Label
+                {
+                    Text = comp.name,
+                    Font = new Font(Font, FontStyle.Bold)
+                };
+                layout.Controls.Add(componentLabel);
+
+                foreach (var member in InspectorInfo.GetInspectableMembers(comp))
+                {
+                    if (member is FieldInfo fi)
+                    {
+                        object value = fi.GetValue(comp);
+                        DrawField(member, value, v => fi.SetValue(comp, v), layout);
+                    }
+                    else if (member is PropertyInfo pi && pi.CanRead && pi.CanWrite)
+                    {
+                        object value = pi.GetValue(comp);
+                        DrawField(member, value, v => pi.SetValue(comp, v), layout);
+                    }
+                }
+            }
+
+            return layout;
+        }
+
+        void DrawField(MemberInfo memberInfo, object value, Action<object> setValue, Control parent)
+        {
+            Type type = value.GetType();
+            string label = memberInfo.Name;
+
+            Label labelControl = new Label
+            {
+                Text = label,
+                AutoSize = true
+            };
+
+            parent.Controls.Add(labelControl);
+            // TODO:    Draw correct Control for type.
+            //          If float: Numeric Box
+            //          If Vector3: Vector3Control
+            //          Etc
+
+            if(type == typeof(float))
+            {
+                var tb = new TextBox
+                {
+                    Text = value.ToString(),
+                    Width = 80
+                };
+                tb.TextChanged += (s, e) =>
+                {
+                    if (float.TryParse(tb.Text, out float newValue))
+                        setValue(newValue);
+                };
+                parent.Controls.Add(tb);
+            }
+
         }
 
         private Button CreateAddComponentButton()
@@ -180,11 +249,12 @@ namespace GameEngine.Editor
 
             positionControl.SetValues(obj.transform.position);
 
-            Vector3 euler;
-            Quaternion.ToEulerAngles(obj.transform.rotation, out euler);
+            Quaternion.ToEulerAngles(obj.transform.rotation, out Vector3 euler);
             rotationControl.SetValues(euler);
 
             scaleControl.SetValues(obj.transform.scale);
+
+            layout.Controls.Add(CreateComponentList());
         }
     }
 }

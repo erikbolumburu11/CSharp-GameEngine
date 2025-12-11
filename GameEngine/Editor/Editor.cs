@@ -67,7 +67,6 @@ namespace GameEngine.Editor
             sceneView.glControl.MouseMove += (s, e) => inputHandler.OnMouseMove(e);
         }
 
-
         private void Application_Idle(object? sender, EventArgs e)
         {
             NativeMessage msg;
@@ -140,7 +139,7 @@ namespace GameEngine.Editor
             using var dialog = new SaveFileDialog();
             dialog.Filter = "Scene Files (*.scene)|*.scene";
             if (dialog.ShowDialog() == DialogResult.OK)
-                SceneSerializer.SaveScene(game.gameObjectManager, dialog.FileName);
+                SceneSerializer.SaveScene(game.gameObjectManager, game.scene, dialog.FileName);
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
@@ -149,10 +148,16 @@ namespace GameEngine.Editor
             dialog.Filter = "Scene Files (*.scene)|*.scene";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                SceneSerializer.LoadScene(game.gameObjectManager, dialog.FileName);
+                SceneSerializer.LoadScene(game.gameObjectManager, game.scene, dialog.FileName);
                 objectHierarchy.RefreshList();
                 sceneView.Refresh();
             }
+        }
+
+        private void sceneSettingsButton_Click(object sender, EventArgs e)
+        {
+            SceneSettings sceneSettings = new(game.scene);
+            sceneSettings.Show();
         }
     }
 }
