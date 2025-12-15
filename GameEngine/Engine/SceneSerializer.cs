@@ -85,7 +85,7 @@ namespace GameEngine.Engine
 
             foreach (GameObjectData data in scene.gameObjects)
             {
-                GameObject gameObject = gameObjectManager.CreateCube();
+                GameObject gameObject = gameObjectManager.CreateGameObject(data.name);
 
                 gameObject.transform.position = new Vector3
                 (

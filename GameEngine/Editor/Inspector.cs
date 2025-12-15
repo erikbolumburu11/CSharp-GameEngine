@@ -12,6 +12,7 @@ namespace GameEngine.Editor
         private readonly GameObjectManager gameObjectManager;
 
         FlowLayoutPanel layout;
+        FlowLayoutPanel componentLayout;
 
         private TextBox nameTextBox;
 
@@ -62,23 +63,26 @@ namespace GameEngine.Editor
             Control scaleRow = CreateLabeledRow("Scale:", scaleControl);
             layout.Controls.Add(scaleRow);
 
-            //TODO: Components and Fields
-
             layout.Controls.Add(CreateAddComponentButton());
 
-
+            componentLayout = CreateComponentList();
+            layout.Controls.Add(componentLayout);
             layout.Hide();
         }
 
         private FlowLayoutPanel CreateComponentList()
         {
+
             FlowLayoutPanel layout = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
-                AutoScroll = true,
+                AutoScroll = false,
                 WrapContents = false,
+                AutoSize = true
             };
+
+            if (editorState.SelectedObject == null) return layout;
 
             foreach (Component comp in editorState.SelectedObject.Components)
             {
@@ -254,7 +258,9 @@ namespace GameEngine.Editor
 
             scaleControl.SetValues(obj.transform.scale);
 
-            layout.Controls.Add(CreateComponentList());
+            if (componentLayout != null) layout.Controls.Remove(componentLayout);
+            componentLayout = CreateComponentList();
+            layout.Controls.Add(componentLayout);
         }
     }
 }

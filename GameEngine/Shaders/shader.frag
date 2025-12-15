@@ -14,10 +14,11 @@ layout(std430, binding = 0) buffer LightBuffer
     Light lights[];
 };
 
-uniform sampler2D texture0; // your 2D texture
+uniform sampler2D texture0;
 
-uniform int lightCount;    // number of active lights
-in vec3 fragPos;           // from vertex shader
+uniform float ambientIntensity;
+uniform int lightCount;    
+in vec3 fragPos;           
 in vec2 texCoord;
 
 out vec4 FragColor;
@@ -38,6 +39,6 @@ void main()
         lighting += lights[i].color * lights[i].intensity * attenuation;
     }
 
-    FragColor = vec4(texColor * lighting, 1.0);
+    FragColor = vec4(texColor * (lighting + vec3(ambientIntensity)), 1.0);
 }
 

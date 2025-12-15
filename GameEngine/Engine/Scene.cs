@@ -8,7 +8,7 @@ namespace GameEngine.Engine
 {
     public class Scene
     {
-        public float ambientLightIntensity;
+        public float ambientLightIntensity = 0.1f;
 
         public Color skyboxColor;
     }

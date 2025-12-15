@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace GameEngine
@@ -62,6 +63,18 @@ namespace GameEngine
         public static string GetDefaultVertPath() => GetProjectDir() + "/Shaders/shader.vert";
         public static string GetDefaultFragPath() => GetProjectDir() + "/Shaders/shader.frag";
 
-        public static float DegToRad(float degrees) => degrees * ((float)Math.PI / 180f);
+
+        public static object GetObjectValue(object obj)
+{
+            var typeOfObject = ((JsonElement)obj).ValueKind;
+
+            switch (typeOfObject)
+            {
+                case JsonValueKind.Number:
+                    return float.Parse(obj.ToString());
+                default:
+                    return obj.ToString();
+            }
+        }
     }
 }

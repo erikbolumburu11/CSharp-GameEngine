@@ -59,7 +59,7 @@ namespace GameEngine.Engine
             GL.ClearColor(scene.skyboxColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            renderer.Render(gameObjectManager, lightManager, camera);
+            renderer.Render(gameObjectManager, lightManager, scene, camera);
         }
     }
 }
