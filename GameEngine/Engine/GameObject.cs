@@ -109,9 +109,9 @@ namespace GameEngine.Engine
             Changed?.Invoke(this);
         }
 
-        public void SetRotation(Vector3 rotation)
+        public void SetRotation(Quaternion rotation)
         {
-            transform.rotation = Quaternion.FromEulerAngles(rotation);
+            transform.rotation = rotation;
             Changed?.Invoke(this);
         }
 

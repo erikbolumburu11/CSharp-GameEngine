@@ -35,19 +35,45 @@ namespace GameEngine.Engine.Components
         //       multiple times
         void CreateShader()
         {
-
             vao.Bind();
             vbo.Bind();
 
             shader = new Shader(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
 
-            int vertexLocation = shader.GetAttribLocation("aPosition");
-            GL.EnableVertexAttribArray(vertexLocation);
-            GL.VertexAttribPointer(vertexLocation, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+            int stride = 8 * sizeof(float);
 
-            int texCoordLocation = shader.GetAttribLocation("aTexCoord");
-            GL.EnableVertexAttribArray(texCoordLocation);
-            GL.VertexAttribPointer(texCoordLocation, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+            // position
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(
+                0,
+                3,
+                VertexAttribPointerType.Float,
+                false,
+                stride,
+                0
+            );
+
+            // texcoord
+            GL.EnableVertexAttribArray(1);
+            GL.VertexAttribPointer(
+                1,
+                2,
+                VertexAttribPointerType.Float,
+                false,
+                stride,
+                3 * sizeof(float)
+            );
+
+            // normal
+            GL.EnableVertexAttribArray(2);
+            GL.VertexAttribPointer(
+                2,
+                3,
+                VertexAttribPointerType.Float,
+                false,
+                stride,
+                5 * sizeof(float)
+            );
 
             vbo.Unbind();
             vao.Unbind();

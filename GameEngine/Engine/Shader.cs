@@ -14,7 +14,6 @@ namespace GameEngine.Engine
 
         Dictionary<string, int> uniformLocations;
 
-
         public Shader(string vertexPath, string fragmentPath)
         {
             int VertexShader;

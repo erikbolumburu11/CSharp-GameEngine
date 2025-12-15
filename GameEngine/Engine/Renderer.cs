@@ -10,14 +10,14 @@ namespace GameEngine.Engine
         Matrix4 view;
         Matrix4 projection;
 
-        public void Render(
+        public void Render
+        (
             GameObjectManager gameObjectManager, 
             LightManager lightManager,
             Scene scene,
             Camera camera
-            )
+        )
         {
-            lightManager.lights.Clear();
             lightManager.lights = gameObjectManager.GetAllComponents<Light>();
 
             lightManager.UploadLights();
@@ -27,21 +27,22 @@ namespace GameEngine.Engine
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
                 MeshRenderer? meshRenderer = gameObject.GetComponent<MeshRenderer>();
-                if (meshRenderer == null) return;
+                if (meshRenderer == null) continue;
 
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
-
                 Shader shader = meshRenderer.shader;
+
+                shader.Use();
+
+                shader.SetMatrix4("model", model);
+                shader.SetMatrix4("view", view);
+                shader.SetMatrix4("projection", projection);
+
                 int lightCountLocation = GL.GetUniformLocation(shader.Handle, "lightCount");
                 GL.Uniform1(lightCountLocation, lightManager.lights.Count);
 
                 int ambientLightIntensityLocation = GL.GetUniformLocation(shader.Handle, "ambientIntensity");
                 GL.Uniform1(ambientLightIntensityLocation, scene.ambientLightIntensity);
-
-                shader.SetMatrix4("model", model);
-                shader.SetMatrix4("view", view);
-                shader.SetMatrix4("projection", projection);
-                shader.Use();
 
                 meshRenderer.texture.Use(TextureUnit.Texture0);
 
@@ -57,7 +58,7 @@ namespace GameEngine.Engine
             Matrix4 rotation = Matrix4.CreateFromQuaternion(transform.rotation);
             Matrix4 scale = Matrix4.CreateScale(transform.scale);
 
-            return translation * rotation * scale;
+            return scale * rotation * translation;
         }
     }
 }

@@ -218,7 +218,12 @@ namespace GameEngine.Editor
                 var obj = editorState.SelectedObject;
                 if (obj == null) return;
 
-                obj.SetRotation(vector);
+                obj.SetRotation(
+                    Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(vector.X)) *
+                    Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(vector.Y)) *
+                    Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(vector.Z)
+                ));
+
             };
 
             scaleControl.ValueChanged += (vector) =>
