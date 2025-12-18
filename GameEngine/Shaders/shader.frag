@@ -30,7 +30,6 @@ void main()
 
     vec3 lighting = vec3(0.0);
 
-
     // Loop over all lights
     for (int i = 0; i < lightCount; i++)
     {
@@ -59,5 +58,7 @@ void main()
     }
 
     FragColor = vec4(texColor * (lighting + vec3(ambientIntensity)), 1.0);
+    // FragColor = vec4(normalize(fragPos) * 0.5 + 0.5, 1.0);
+
 }
 
