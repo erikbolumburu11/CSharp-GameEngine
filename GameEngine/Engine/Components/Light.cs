@@ -16,6 +16,7 @@ namespace GameEngine.Engine.Components
         public float intensity;
         public Vector3 color;
         public float radius;
+        public float specularStrength;
     }
 
     public class Light : Component, IComponentSerializable
@@ -23,6 +24,7 @@ namespace GameEngine.Engine.Components
         [ExposeInInspector] public float intensity = 1f;
         public Vector3 color = new(255, 255, 255);
         [ExposeInInspector] public float radius = 3f;
+        [ExposeInInspector] public float specularStrength = 0.5f;
 
         public Dictionary<string, object> Save()
         {
@@ -32,7 +34,8 @@ namespace GameEngine.Engine.Components
                 ["colorR"] = color.X,
                 ["colorG"] = color.Y,
                 ["colorB"] = color.Z,
-                ["radius"] = radius
+                ["radius"] = radius,
+                ["specularStrength"] = specularStrength
             };
         }
 
@@ -46,6 +49,7 @@ namespace GameEngine.Engine.Components
                 (float)Util.GetObjectValue(data["colorB"])
             );
             radius = (float)Util.GetObjectValue(data["radius"]);
+            specularStrength = (float)Util.GetObjectValue(data["specularStrength"]);
         }
 
         public LightData ToLightData()
@@ -55,7 +59,8 @@ namespace GameEngine.Engine.Components
                 position = gameObject.transform.position,
                 intensity = intensity / 100,
                 color = color,
-                radius = radius
+                radius = radius,
+                specularStrength = specularStrength
             };
         }
     }

@@ -6,6 +6,7 @@ struct Light
     float intensity;
     vec3 color;
     float radius;
+    float specularStrength;
 };
 
 // SSBO: array of lights
@@ -18,6 +19,8 @@ uniform sampler2D texture0;
 
 uniform float ambientIntensity;
 uniform int lightCount;    
+uniform vec3 viewPos;
+
 in vec3 fragPos;           
 in vec2 texCoord;
 in vec3 normal;
@@ -53,12 +56,18 @@ void main()
         attenuation = clamp(attenuation, 0.0, 1.0);
         attenuation *= attenuation; // smoother falloff
 
+        // TODO: need to get viewPos
+        vec3 viewDir = normalize(viewPos - fragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+        // TODO: Add specularStrength to LightStruct
+        vec3 specular = lights[i].specularStrength * spec * lights[i].color;
+
         // Accumulate lighting
-        lighting += lights[i].color * diff * lights[i].intensity * attenuation;
+        lighting += lights[i].color * diff * lights[i].intensity * attenuation + specular * attenuation;
     }
 
     FragColor = vec4(texColor * (lighting + vec3(ambientIntensity)), 1.0);
-    // FragColor = vec4(normalize(fragPos) * 0.5 + 0.5, 1.0);
-
 }
 

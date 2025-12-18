@@ -38,11 +38,9 @@ namespace GameEngine.Engine
                 shader.SetMatrix4("view", view);
                 shader.SetMatrix4("projection", projection);
 
-                int lightCountLocation = GL.GetUniformLocation(shader.Handle, "lightCount");
-                GL.Uniform1(lightCountLocation, lightManager.lights.Count);
-
-                int ambientLightIntensityLocation = GL.GetUniformLocation(shader.Handle, "ambientIntensity");
-                GL.Uniform1(ambientLightIntensityLocation, scene.ambientLightIntensity);
+                shader.SetInt("lightCount", lightManager.lights.Count);
+                shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
+                shader.SetVector3("viewPos", camera.position);
 
                 meshRenderer.texture.Use(TextureUnit.Texture0);
 
