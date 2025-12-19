@@ -10,7 +10,7 @@ uniform mat4 projection;
 
 out vec3 normal;
 out vec3 fragPos;       // world-space position
-out vec2 texCoord;      // pass through texture coordinates
+out vec2 texCoord;      
 
 void main()
 {
