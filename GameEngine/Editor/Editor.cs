@@ -18,7 +18,6 @@ namespace GameEngine.Editor
 
         EditorState editorState;
 
-
         SceneView sceneView;
         ObjectHierarchy objectHierarchy;
         Inspector inspector;

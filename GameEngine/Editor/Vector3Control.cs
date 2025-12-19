@@ -27,7 +27,8 @@ namespace GameEngine.Editor
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.TopDown,
                 AutoSize = true,
-                WrapContents = false
+                WrapContents = false,
+                Margin = Padding.Empty,
             };
 
             // Create X row

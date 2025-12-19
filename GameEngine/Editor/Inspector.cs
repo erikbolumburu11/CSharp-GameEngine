@@ -40,6 +40,7 @@ namespace GameEngine.Editor
                 FlowDirection = FlowDirection.TopDown,
                 AutoScroll = true,
                 WrapContents = false,
+                Padding = new Padding(4)
             };
             Controls.Add(layout);
 
@@ -119,7 +120,8 @@ namespace GameEngine.Editor
             Label labelControl = new Label
             {
                 Text = label,
-                AutoSize = true
+                AutoSize = true,
+                Margin = Padding.Empty
             };
 
             parent.Controls.Add(labelControl);
@@ -133,7 +135,8 @@ namespace GameEngine.Editor
                 var tb = new TextBox
                 {
                     Text = value.ToString(),
-                    Width = 80
+                    Width = 80,
+                    Margin = Padding.Empty
                 };
                 tb.TextChanged += (s, e) =>
                 {
@@ -186,7 +189,9 @@ namespace GameEngine.Editor
             var panel = new FlowLayoutPanel
             {
                 AutoSize = true,
-                FlowDirection = FlowDirection.LeftToRight
+                FlowDirection = FlowDirection.LeftToRight,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
             };
 
             panel.Controls.Add(new Label { Text = labelText, AutoSize = true });
