@@ -26,6 +26,16 @@ namespace GameEngine.Editor
             {
                 Text = "Ambient Light Intensity:"
             };
+            // TODO: This is broken!
+            TextBox ambientLightIntensityTextBox = new TextBox
+            {
+                Text = scene.ambientLightIntensity.ToString()
+            };
+            ambientLightIntensityTextBox.TextChanged += (s, e) =>
+            {
+                if(float.TryParse(ambientLightIntensityTextBox.Text, out float value));
+                    scene.ambientLightIntensity = value; 
+            };
 
             Label skyboxColorLabel = new Label
             {
@@ -48,6 +58,7 @@ namespace GameEngine.Editor
             };
 
             layout.Controls.Add(ambientLightIntensityLabel);
+            layout.Controls.Add(ambientLightIntensityTextBox);
             layout.Controls.Add(skyboxColorLabel);
             layout.Controls.Add(skyBoxColorButton);
         }
