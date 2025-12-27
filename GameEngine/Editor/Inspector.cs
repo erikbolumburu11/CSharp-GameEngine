@@ -1,7 +1,5 @@
 ﻿using GameEngine.Engine;
 using GameEngine.Engine.Components;
-using OpenTK.Mathematics;
-using System.Reflection;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine.Editor
@@ -12,16 +10,8 @@ namespace GameEngine.Editor
         private readonly GameObjectManager gameObjectManager;
 
         private Panel scrollPanel;
-
-        private TableLayoutPanel transformTable;
-        private TableLayoutPanel componentTable;
-
+        private TableLayoutPanel inspectorLayout;
         private Button addComponentButton;
-
-        private TextBox nameTextBox;
-        private Vector3Control positionControl;
-        private Vector3Control rotationControl;
-        private Vector3Control scaleControl;
 
         public Inspector(EditorState editorState, GameObjectManager gameObjectManager)
         {
@@ -43,70 +33,22 @@ namespace GameEngine.Editor
             };
             Controls.Add(scrollPanel);
 
-            transformTable = CreateTable();
-            scrollPanel.Controls.Add(transformTable);
-
-            nameTextBox = CreateTextBox();
-            AddRow(transformTable, "Name", nameTextBox);
-
-            positionControl = new Vector3Control { Margin = Padding.Empty };
-            AddRow(transformTable, "Position", positionControl);
-
-            rotationControl = new Vector3Control { Margin = Padding.Empty };
-            AddRow(transformTable, "Rotation", rotationControl);
-
-            scaleControl = new Vector3Control { Margin = Padding.Empty };
-            AddRow(transformTable, "Scale", scaleControl);
-
-            addComponentButton = CreateAddComponentButton();
-            addComponentButton.Margin = new Padding(0, 8, 0, 8);
-            scrollPanel.Controls.Add(addComponentButton);
-
-            componentTable = CreateTable();
-            scrollPanel.Controls.Add(componentTable);
-
-            scrollPanel.Hide();
-        }
-
-        private TableLayoutPanel CreateTable()
-        {
-            return new TableLayoutPanel
+            inspectorLayout = new TableLayoutPanel
             {
-                ColumnCount = 2,
+                ColumnCount = 1,
                 AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Top,
                 Margin = Padding.Empty,
-                Padding = Padding.Empty
+                Padding = new Padding(6, 6, 6, 6)
             };
-        }
+            inspectorLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            scrollPanel.Controls.Add(inspectorLayout);
+            scrollPanel.Resize += (s, e) => inspectorLayout.Width = scrollPanel.ClientSize.Width;
 
-        private void AddRow(TableLayoutPanel table, string label, Control field)
-        {
-            int row = table.RowCount++;
-            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            addComponentButton = CreateAddComponentButton();
 
-            var lbl = new Label
-            {
-                Text = label,
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(0, 3, 6, 3)
-            };
-
-            field.Anchor = AnchorStyles.Left | AnchorStyles.Right;
-            field.Margin = Padding.Empty;
-
-            table.Controls.Add(lbl, 0, row);
-            table.Controls.Add(field, 1, row);
-        }
-
-        private TextBox CreateTextBox()
-        {
-            return new TextBox
-            {
-                Width = 120,
-                Margin = Padding.Empty
-            };
+            scrollPanel.Hide();
         }
 
         private Button CreateAddComponentButton()
@@ -121,7 +63,15 @@ namespace GameEngine.Editor
                 cms.Items.Add(new ToolStripMenuItem(
                     componentType.Name,
                     null,
-                    (s, e) => editorState.SelectedObject?.AddComponent(componentType)
+                    (s, e) =>
+                    {
+                        var selected = editorState.SelectedObject;
+                        if (selected == null)
+                            return;
+
+                        selected.AddComponent(componentType);
+                        UpdateInspectorFields(selected);
+                    }
                 ));
             }
 
@@ -134,36 +84,6 @@ namespace GameEngine.Editor
 
         private void HookEvents()
         {
-            nameTextBox.TextChanged += (s, e) =>
-            {
-                var obj = editorState.SelectedObject;
-                if (obj == null) return;
-
-                gameObjectManager.RenameGameObject(obj, nameTextBox.Text);
-            };
-
-            positionControl.ValueChanged += v =>
-            {
-                editorState.SelectedObject?.SetPosition(v);
-            };
-
-            rotationControl.ValueChanged += v =>
-            {
-                var obj = editorState.SelectedObject;
-                if (obj == null) return;
-
-                obj.SetRotation(
-                    Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(v.X)) *
-                    Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(v.Y)) *
-                    Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(v.Z))
-                );
-            };
-
-            scaleControl.ValueChanged += v =>
-            {
-                editorState.SelectedObject?.SetScale(v);
-            };
-
             editorState.OnSelectionChanged += UpdateInspectorFields;
         }
 
@@ -172,80 +92,129 @@ namespace GameEngine.Editor
             if (obj == null)
             {
                 scrollPanel.Hide();
-                ClearComponentTable();
+                ClearInspector();
                 return;
             }
 
             scrollPanel.Show();
 
-            nameTextBox.Text = obj.name;
-            positionControl.SetValues(obj.transform.position);
-
-            Quaternion.ToEulerAngles(obj.transform.rotation, out Vector3 euler);
-            rotationControl.SetValues(euler);
-
-            scaleControl.SetValues(obj.transform.scale);
-
-            PopulateComponentTable(obj);
+            BuildInspector(obj);
         }
 
-        private void ClearComponentTable()
+        private void BuildInspector(GameObject obj)
         {
-            componentTable.Controls.Clear();
-            componentTable.RowStyles.Clear();
-            componentTable.RowCount = 0;
-        }
+            ClearInspector();
 
-        private void PopulateComponentTable(GameObject obj)
-        {
-            ClearComponentTable();
+            AddSection(CreateEditorSection(null, new GameObjectEditor(obj)));
+            AddSeparator();
+            AddSection(CreateEditorSection("Transform", new TransformEditor(obj)));
 
             foreach (Component comp in obj.Components)
             {
-                int headerRow = componentTable.RowCount++;
-                componentTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-                var header = new Label
+                if (comp is Light light)
                 {
-                    Text = comp.name,
-                    Font = new Font(Font, FontStyle.Bold),
-                    AutoSize = true,
-                    Margin = new Padding(0, 8, 0, 4)
-                };
-
-                componentTable.Controls.Add(header, 0, headerRow);
-                componentTable.SetColumnSpan(header, 2);
-
-                foreach (var member in InspectorInfo.GetInspectableMembers(comp))
-                {
-                    if (member is FieldInfo fi)
-                        DrawFieldRow(componentTable, member.Name, fi.GetValue(comp), v => fi.SetValue(comp, v));
-                    else if (member is PropertyInfo pi && pi.CanRead && pi.CanWrite)
-                        DrawFieldRow(componentTable, member.Name, pi.GetValue(comp), v => pi.SetValue(comp, v));
+                    AddSeparator();
+                    AddSection(CreateEditorSection(comp.name, new LightEditor(light)));
                 }
             }
+
+            AddSeparator();
+            addComponentButton.Margin = new Padding(0, 8, 0, 8);
+            AddSection(addComponentButton);
         }
 
-        private void DrawFieldRow(
-            TableLayoutPanel table,
-            string label,
-            object value,
-            Action<object> setValue
-        )
+        private Control CreateEditorSection<T>(string? header, ComponentEditor<T> editor)
         {
-            if (value is float f)
+            var section = new Panel
             {
-                var tb = CreateTextBox();
-                tb.Text = f.ToString();
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2),
+                Padding = Padding.Empty
+            };
 
-                tb.TextChanged += (s, e) =>
+            if (!string.IsNullOrWhiteSpace(header))
+            {
+                var headerLabel = new Label
                 {
-                    if (float.TryParse(tb.Text, out float v))
-                        setValue(v);
+                    Text = header,
+                    Font = new Font(Font, FontStyle.Bold),
+                    AutoSize = true,
+                    Margin = new Padding(0, 4, 0, 2),
+                    Dock = DockStyle.Top
                 };
-
-                AddRow(table, label, tb);
+                section.Controls.Add(headerLabel);
             }
+
+            var table = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+            foreach (var field in editor.fields)
+            {
+                int row = table.RowCount++;
+                table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                var label = new Label
+                {
+                    Text = field.label,
+                    AutoSize = true,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Dock = DockStyle.Top,
+                    Margin = new Padding(0, 2, 0, 0)
+                };
+                table.Controls.Add(label, 0, row++);
+
+                table.RowCount = row + 1;
+                table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                var control = FieldBinder.CreateBoundControl(field);
+                control.Dock = DockStyle.Fill;
+                control.Margin = new Padding(0, 0, 0, 4);
+                table.Controls.Add(control, 0, row);
+            }
+
+            section.Controls.Add(table);
+            if (!string.IsNullOrWhiteSpace(header))
+                section.Controls.SetChildIndex(table, 0);
+            section.Resize += (s, e) => table.Width = section.ClientSize.Width;
+            table.Width = section.ClientSize.Width;
+
+            return section;
+        }
+
+        private void ClearInspector()
+        {
+            inspectorLayout.Controls.Clear();
+            inspectorLayout.RowStyles.Clear();
+            inspectorLayout.RowCount = 0;
+        }
+
+        private void AddSection(Control control)
+        {
+            int row = inspectorLayout.RowCount++;
+            inspectorLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            inspectorLayout.Controls.Add(control, 0, row);
+        }
+
+        private void AddSeparator()
+        {
+            var separator = new Panel
+            {
+                Height = 1,
+                Dock = DockStyle.Top,
+                BackColor = SystemColors.ControlDark,
+                Margin = new Padding(0, 6, 0, 6)
+            };
+            AddSection(separator);
         }
     }
 }
