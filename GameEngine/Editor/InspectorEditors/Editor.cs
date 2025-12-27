@@ -1,11 +1,11 @@
 using GameEngine.Engine;
 
-public abstract class ComponentEditor<T>
+public abstract class Editor<T>
 {
     public T target;
     public List<FieldDescriptor> fields;
 
-    protected ComponentEditor(T target)
+    protected Editor(T target)
     {
         fields = new();
         this.target = target;

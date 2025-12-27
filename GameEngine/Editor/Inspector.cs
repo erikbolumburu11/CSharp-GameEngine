@@ -123,7 +123,7 @@ namespace GameEngine.Editor
             AddSection(addComponentButton);
         }
 
-        private Control CreateEditorSection<T>(string? header, ComponentEditor<T> editor)
+        private Control CreateEditorSection<T>(string? header, Editor<T> editor)
         {
             var section = new Panel
             {

@@ -1,6 +1,6 @@
 using GameEngine.Engine;
 
-public class GameObjectEditor : ComponentEditor<GameObject>
+public class GameObjectEditor : Editor<GameObject>
 {
     public GameObjectEditor(GameObject gameObject) : base(gameObject)
     {

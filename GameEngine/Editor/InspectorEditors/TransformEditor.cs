@@ -1,7 +1,7 @@
 using GameEngine.Engine;
 using OpenTK.Mathematics;
 
-public class TransformEditor : ComponentEditor<GameObject>
+public class TransformEditor : Editor<GameObject>
 {
     Transform transform;
 

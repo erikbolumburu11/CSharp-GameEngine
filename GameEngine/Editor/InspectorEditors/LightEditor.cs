@@ -1,6 +1,6 @@
 using GameEngine.Engine.Components;
 
-public class LightEditor : ComponentEditor<Light>
+public class LightEditor : Editor<Light>
 {
     public LightEditor(Light target) : base(target)
     {
