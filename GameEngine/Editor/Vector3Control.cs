@@ -17,7 +17,6 @@ namespace GameEngine.Editor
 
         public Vector3Control()
         {
-
             xBox = new TextBox { Width = 60 };
             yBox = new TextBox { Width = 60 };
             zBox = new TextBox { Width = 60 };

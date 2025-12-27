@@ -11,11 +11,14 @@ namespace GameEngine.Editor
         private readonly EditorState editorState;
         private readonly GameObjectManager gameObjectManager;
 
-        FlowLayoutPanel layout;
-        FlowLayoutPanel componentLayout;
+        private Panel scrollPanel;
+
+        private TableLayoutPanel transformTable;
+        private TableLayoutPanel componentTable;
+
+        private Button addComponentButton;
 
         private TextBox nameTextBox;
-
         private Vector3Control positionControl;
         private Vector3Control rotationControl;
         private Vector3Control scaleControl;
@@ -33,171 +36,100 @@ namespace GameEngine.Editor
 
         private void InitializeUI()
         {
-            // Main vertical layout
-            layout = new FlowLayoutPanel
+            scrollPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                AutoScroll = true,
-                WrapContents = false,
-                Padding = new Padding(4)
+                AutoScroll = true
             };
-            Controls.Add(layout);
+            Controls.Add(scrollPanel);
 
-            // NAME FIELD
-            nameTextBox = new TextBox { Width = 150 };
-            Control nameRow = CreateLabeledRow("Name:", nameTextBox);
-            layout.Controls.Add(nameRow);
+            transformTable = CreateTable();
+            scrollPanel.Controls.Add(transformTable);
 
-            // POSITION FIELD
-            positionControl = new Vector3Control();
-            Control posRow = CreateLabeledRow("Position:", positionControl);
-            layout.Controls.Add(posRow);
+            nameTextBox = CreateTextBox();
+            AddRow(transformTable, "Name", nameTextBox);
 
-            // ROTATION FIELD
-            rotationControl = new Vector3Control();
-            Control rotRow = CreateLabeledRow("Rotation:", rotationControl);
-            layout.Controls.Add(rotRow);
+            positionControl = new Vector3Control { Margin = Padding.Empty };
+            AddRow(transformTable, "Position", positionControl);
 
-            // SCALE FIELD
-            scaleControl = new Vector3Control();
-            Control scaleRow = CreateLabeledRow("Scale:", scaleControl);
-            layout.Controls.Add(scaleRow);
+            rotationControl = new Vector3Control { Margin = Padding.Empty };
+            AddRow(transformTable, "Rotation", rotationControl);
 
-            layout.Controls.Add(CreateAddComponentButton());
+            scaleControl = new Vector3Control { Margin = Padding.Empty };
+            AddRow(transformTable, "Scale", scaleControl);
 
-            componentLayout = CreateComponentList();
-            layout.Controls.Add(componentLayout);
-            layout.Hide();
+            addComponentButton = CreateAddComponentButton();
+            addComponentButton.Margin = new Padding(0, 8, 0, 8);
+            scrollPanel.Controls.Add(addComponentButton);
+
+            componentTable = CreateTable();
+            scrollPanel.Controls.Add(componentTable);
+
+            scrollPanel.Hide();
         }
 
-        private FlowLayoutPanel CreateComponentList()
+        private TableLayoutPanel CreateTable()
         {
-
-            FlowLayoutPanel layout = new FlowLayoutPanel
+            return new TableLayoutPanel
             {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.TopDown,
-                AutoScroll = false,
-                WrapContents = false,
-                AutoSize = true
+                ColumnCount = 2,
+                AutoSize = true,
+                Dock = DockStyle.Top,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
             };
-
-            if (editorState.SelectedObject == null) return layout;
-
-            foreach (Component comp in editorState.SelectedObject.Components)
-            {
-                Label componentLabel = new Label
-                {
-                    Text = comp.name,
-                    Font = new Font(Font, FontStyle.Bold)
-                };
-                layout.Controls.Add(componentLabel);
-
-                foreach (var member in InspectorInfo.GetInspectableMembers(comp))
-                {
-                    if (member is FieldInfo fi)
-                    {
-                        object value = fi.GetValue(comp);
-                        DrawField(member, value, v => fi.SetValue(comp, v), layout);
-                    }
-                    else if (member is PropertyInfo pi && pi.CanRead && pi.CanWrite)
-                    {
-                        object value = pi.GetValue(comp);
-                        DrawField(member, value, v => pi.SetValue(comp, v), layout);
-                    }
-                }
-            }
-
-            return layout;
         }
 
-        void DrawField(MemberInfo memberInfo, object value, Action<object> setValue, Control parent)
+        private void AddRow(TableLayoutPanel table, string label, Control field)
         {
-            Type type = value.GetType();
-            string label = memberInfo.Name;
+            int row = table.RowCount++;
+            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
-            Label labelControl = new Label
+            var lbl = new Label
             {
                 Text = label,
                 AutoSize = true,
-                Margin = Padding.Empty
+                Anchor = AnchorStyles.Left,
+                Margin = new Padding(0, 3, 6, 3)
             };
 
-            parent.Controls.Add(labelControl);
-            // TODO:    Draw correct Control for type.
-            //          If float: Numeric Box
-            //          If Vector3: Vector3Control
-            //          Etc
+            field.Anchor = AnchorStyles.Left | AnchorStyles.Right;
+            field.Margin = Padding.Empty;
 
-            if(type == typeof(float))
+            table.Controls.Add(lbl, 0, row);
+            table.Controls.Add(field, 1, row);
+        }
+
+        private TextBox CreateTextBox()
+        {
+            return new TextBox
             {
-                var tb = new TextBox
-                {
-                    Text = value.ToString(),
-                    Width = 80,
-                    Margin = Padding.Empty
-                };
-                tb.TextChanged += (s, e) =>
-                {
-                    if (float.TryParse(tb.Text, out float newValue))
-                        setValue(newValue);
-                };
-                parent.Controls.Add(tb);
-            }
-
+                Width = 120,
+                Margin = Padding.Empty
+            };
         }
 
         private Button CreateAddComponentButton()
         {
             ContextMenuStrip cms = new ContextMenuStrip();
 
-            foreach (Type componentType in ComponentTypeRegistry.Types.Values)
+            foreach (var componentType in ComponentTypeRegistry.Types.Values)
             {
-                if (Equals(typeof(Component), componentType)) continue;
+                if (componentType == typeof(Component))
+                    continue;
 
-                ToolStripMenuItem componentMenuItem = new ToolStripMenuItem
-                (
+                cms.Items.Add(new ToolStripMenuItem(
                     componentType.Name,
                     null,
-                    (s, e) =>
-                    {
-                        editorState.SelectedObject.AddComponent(componentType);
-                    },
-                    componentType.Name
-               );
-
-                cms.Items.Add(componentMenuItem);
+                    (s, e) => editorState.SelectedObject?.AddComponent(componentType)
+                ));
             }
 
-            Button button = new Button
+            return new Button
             {
                 Text = "Add Component",
                 Width = 150
             };
-
-            button.Click += (s, e) =>
-            {
-                cms.Show(button.Location);
-            };
-
-            return button;
-        }
-
-        private Control CreateLabeledRow(string labelText, Control input)
-        {
-            var panel = new FlowLayoutPanel
-            {
-                AutoSize = true,
-                FlowDirection = FlowDirection.LeftToRight,
-                Margin = Padding.Empty,
-                Padding = Padding.Empty
-            };
-
-            panel.Controls.Add(new Label { Text = labelText, AutoSize = true });
-            panel.Controls.Add(input);
-
-            return panel;
         }
 
         private void HookEvents()
@@ -210,33 +142,26 @@ namespace GameEngine.Editor
                 gameObjectManager.RenameGameObject(obj, nameTextBox.Text);
             };
 
-            positionControl.ValueChanged += (vector) =>
+            positionControl.ValueChanged += v =>
             {
-                var obj = editorState.SelectedObject;
-                if (obj == null) return;
-
-                obj.SetPosition(vector);
+                editorState.SelectedObject?.SetPosition(v);
             };
 
-            rotationControl.ValueChanged += (vector) =>
+            rotationControl.ValueChanged += v =>
             {
                 var obj = editorState.SelectedObject;
                 if (obj == null) return;
 
                 obj.SetRotation(
-                    Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(vector.X)) *
-                    Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(vector.Y)) *
-                    Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(vector.Z)
-                ));
-
+                    Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(v.X)) *
+                    Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(v.Y)) *
+                    Quaternion.FromAxisAngle(Vector3.UnitZ, MathHelper.DegreesToRadians(v.Z))
+                );
             };
 
-            scaleControl.ValueChanged += (vector) =>
+            scaleControl.ValueChanged += v =>
             {
-                var obj = editorState.SelectedObject;
-                if (obj == null) return;
-
-                obj.SetScale(vector);
+                editorState.SelectedObject?.SetScale(v);
             };
 
             editorState.OnSelectionChanged += UpdateInspectorFields;
@@ -246,21 +171,14 @@ namespace GameEngine.Editor
         {
             if (obj == null)
             {
-                layout.Hide();
-
-                nameTextBox.Text = "";
-
-                positionControl.SetValues(new Vector3());
-                rotationControl.SetValues(new Vector3());
-                scaleControl.SetValues(new Vector3());
-
+                scrollPanel.Hide();
+                ClearComponentTable();
                 return;
             }
 
-            layout.Show();
+            scrollPanel.Show();
 
             nameTextBox.Text = obj.name;
-
             positionControl.SetValues(obj.transform.position);
 
             Quaternion.ToEulerAngles(obj.transform.rotation, out Vector3 euler);
@@ -268,9 +186,66 @@ namespace GameEngine.Editor
 
             scaleControl.SetValues(obj.transform.scale);
 
-            if (componentLayout != null) layout.Controls.Remove(componentLayout);
-            componentLayout = CreateComponentList();
-            layout.Controls.Add(componentLayout);
+            PopulateComponentTable(obj);
+        }
+
+        private void ClearComponentTable()
+        {
+            componentTable.Controls.Clear();
+            componentTable.RowStyles.Clear();
+            componentTable.RowCount = 0;
+        }
+
+        private void PopulateComponentTable(GameObject obj)
+        {
+            ClearComponentTable();
+
+            foreach (Component comp in obj.Components)
+            {
+                int headerRow = componentTable.RowCount++;
+                componentTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                var header = new Label
+                {
+                    Text = comp.name,
+                    Font = new Font(Font, FontStyle.Bold),
+                    AutoSize = true,
+                    Margin = new Padding(0, 8, 0, 4)
+                };
+
+                componentTable.Controls.Add(header, 0, headerRow);
+                componentTable.SetColumnSpan(header, 2);
+
+                foreach (var member in InspectorInfo.GetInspectableMembers(comp))
+                {
+                    if (member is FieldInfo fi)
+                        DrawFieldRow(componentTable, member.Name, fi.GetValue(comp), v => fi.SetValue(comp, v));
+                    else if (member is PropertyInfo pi && pi.CanRead && pi.CanWrite)
+                        DrawFieldRow(componentTable, member.Name, pi.GetValue(comp), v => pi.SetValue(comp, v));
+                }
+            }
+        }
+
+        private void DrawFieldRow(
+            TableLayoutPanel table,
+            string label,
+            object value,
+            Action<object> setValue
+        )
+        {
+            if (value is float f)
+            {
+                var tb = CreateTextBox();
+                tb.Text = f.ToString();
+
+                tb.TextChanged += (s, e) =>
+                {
+                    if (float.TryParse(tb.Text, out float v))
+                        setValue(v);
+                };
+
+                AddRow(table, label, tb);
+            }
         }
     }
 }
