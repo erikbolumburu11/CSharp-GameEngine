@@ -1,36 +1,39 @@
-public abstract class FieldControlBase<T> : UserControl
+namespace GameEngine.Editor
 {
-    private bool suppressEvent = false;
-
-    public event Action<T>? ValueChanged;
-
-    protected FieldControlBase()
+    public abstract class FieldControlBase<T> : UserControl
     {
-        AutoSize = false;
-        Height = 24;
-        MinimumSize = new Size(0, 24);
-        Margin = Padding.Empty;
-        Padding = Padding.Empty;
-    }
+        private bool suppressEvent = false;
 
-    protected abstract void SetControlValue(T value);
-    protected abstract T GetControlValue();
+        public event Action<T>? ValueChanged;
 
-    public T Value
-    {
-        get => GetControlValue();
-        set
+        protected FieldControlBase()
         {
-            suppressEvent = true;
-            SetControlValue(value);
-            suppressEvent = false;
+            AutoSize = false;
+            Height = 24;
+            MinimumSize = new Size(0, 24);
+            Margin = Padding.Empty;
+            Padding = Padding.Empty;
         }
-    }
 
-    // Call this from child events (TextChanged, CheckedChanged, etc.)
-    protected void NotifyValueChanged()
-    {
-        if (suppressEvent) return;
-        ValueChanged?.Invoke(Value);
+        protected abstract void SetControlValue(T value);
+        protected abstract T GetControlValue();
+
+        public T Value
+        {
+            get => GetControlValue();
+            set
+            {
+                suppressEvent = true;
+                SetControlValue(value);
+                suppressEvent = false;
+            }
+        }
+
+        // Call this from child events (TextChanged, CheckedChanged, etc.)
+        protected void NotifyValueChanged()
+        {
+            if (suppressEvent) return;
+            ValueChanged?.Invoke(Value);
+        }
     }
 }

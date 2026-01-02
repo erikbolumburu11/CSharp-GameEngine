@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GameEngine.Engine
+﻿namespace GameEngine.Engine
 {
     public interface IComponentSerializable
     {
@@ -18,7 +12,7 @@ namespace GameEngine.Engine
 
         public Transform transform => gameObject.transform;
 
-        public virtual void Start() { } 
+        public virtual void Start() { }
         public virtual void Update(float deltaTime) { }
         public virtual void OnDestroy() { }
 

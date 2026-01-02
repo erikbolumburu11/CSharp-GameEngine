@@ -1,15 +1,18 @@
 using GameEngine.Engine;
 
-public class GameObjectEditor : Editor<GameObject>
+namespace GameEngine.Editor
 {
-    public GameObjectEditor(GameObject gameObject) : base(gameObject)
+    public class GameObjectEditor : Editor<GameObject>
     {
-        fields.Add(new FieldDescriptor
+        public GameObjectEditor(GameObject gameObject) : base(gameObject)
         {
-            label = "Name",
-            valueType = typeof(string),
-            getValue = () => gameObject.name,
-            setValue = v => gameObject.SetName((string)v)
-        });
+            fields.Add(new FieldDescriptor
+            {
+                label = "Name",
+                valueType = typeof(string),
+                getValue = () => gameObject.name,
+                setValue = v => gameObject.SetName((string)v)
+            });
+        }
     }
 }

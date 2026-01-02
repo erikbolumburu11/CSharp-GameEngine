@@ -1,9 +1,4 @@
 ﻿using GameEngine.Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine.Editor
@@ -28,11 +23,11 @@ namespace GameEngine.Editor
                 ColumnCount = 1,
                 RowCount = 3,
             };
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));         
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));         
-            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));    
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
             Controls.Add(layout);
-      
+
             Button newCubeButton = new Button { Width = 150 };
             newCubeButton.Text = "New Cube";
 
@@ -90,7 +85,7 @@ namespace GameEngine.Editor
             int index = listBox.Items.IndexOf(obj);
             if (index >= 0)
             {
-                listBox.Items[index] = listBox.Items[index]; 
+                listBox.Items[index] = listBox.Items[index];
             }
         }
 
@@ -103,7 +98,7 @@ namespace GameEngine.Editor
 
         public void SelectObject()
         {
-            if(listBox.SelectedItem is GameObject gameObject)
+            if (listBox.SelectedItem is GameObject gameObject)
             {
                 editorState.Select(gameObject);
             }

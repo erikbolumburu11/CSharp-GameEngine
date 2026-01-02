@@ -1,9 +1,4 @@
 ﻿using GameEngine.Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameEngine.Editor
 {
@@ -11,6 +6,13 @@ namespace GameEngine.Editor
     {
         public GameObject SelectedObject { get; private set; }
         public event Action<GameObject> OnSelectionChanged;
+
+        public Game game { get; private set; }
+
+        public EditorState()
+        {
+            game = new Game();
+        }
 
         public void Select(GameObject obj)
         {

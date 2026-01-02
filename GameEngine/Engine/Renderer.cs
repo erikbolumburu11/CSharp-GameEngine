@@ -1,5 +1,4 @@
-﻿using GameEngine.Editor;
-using GameEngine.Engine.Components;
+﻿using GameEngine.Engine.Components;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -12,7 +11,7 @@ namespace GameEngine.Engine
 
         public void Render
         (
-            GameObjectManager gameObjectManager, 
+            GameObjectManager gameObjectManager,
             LightManager lightManager,
             Scene scene,
             Camera camera

@@ -74,7 +74,7 @@ namespace GameEngine
 
 
         public static object GetObjectValue(object obj)
-{
+        {
             var typeOfObject = ((JsonElement)obj).ValueKind;
 
             switch (typeOfObject)

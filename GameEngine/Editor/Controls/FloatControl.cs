@@ -1,50 +1,53 @@
 using System.Globalization;
 
-public class FloatControl : FieldControlBase<float>
+namespace GameEngine.Editor
 {
-    private readonly TextBox box = new TextBox { Width = 80 };
-    private float lastValidValue;
-
-    public FloatControl()
+    public class FloatControl : FieldControlBase<float>
     {
-        Controls.Add(box);
+        private readonly TextBox box = new TextBox { Width = 80 };
+        private float lastValidValue;
 
-        box.TextChanged += OnTextChanged;
-        box.Leave += OnLeave;
-    }
+        public FloatControl()
+        {
+            Controls.Add(box);
 
-    protected override void SetControlValue(float value)
-    {
-        lastValidValue = value;
-        box.Text = value.ToString(CultureInfo.InvariantCulture);
-    }
+            box.TextChanged += OnTextChanged;
+            box.Leave += OnLeave;
+        }
 
-    protected override float GetControlValue()
-    {
-        return lastValidValue;
-    }
-
-    private void OnTextChanged(object? sender, EventArgs e)
-    {
-        if (string.IsNullOrWhiteSpace(box.Text) ||
-            box.Text == "-" ||
-            box.Text == "." ||
-            box.Text == "-.")
-            return;
-
-        if (float.TryParse(
-            box.Text,
-            NumberStyles.Float,
-            CultureInfo.InvariantCulture,
-            out float value))
+        protected override void SetControlValue(float value)
         {
             lastValidValue = value;
-            NotifyValueChanged();
+            box.Text = value.ToString(CultureInfo.InvariantCulture);
         }
-    }
 
-    private void OnLeave(object? sender, EventArgs e)
-    {
-        box.Text = lastValidValue.ToString(CultureInfo.InvariantCulture);
+        protected override float GetControlValue()
+        {
+            return lastValidValue;
+        }
+
+        private void OnTextChanged(object? sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(box.Text) ||
+                box.Text == "-" ||
+                box.Text == "." ||
+                box.Text == "-.")
+                return;
+
+            if (float.TryParse(
+                box.Text,
+                NumberStyles.Float,
+                CultureInfo.InvariantCulture,
+                out float value))
+            {
+                lastValidValue = value;
+                NotifyValueChanged();
+            }
+        }
+
+        private void OnLeave(object? sender, EventArgs e)
+        {
+            box.Text = lastValidValue.ToString(CultureInfo.InvariantCulture);
+        }
     }
 }

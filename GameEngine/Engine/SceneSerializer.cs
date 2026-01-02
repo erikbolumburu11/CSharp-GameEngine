@@ -1,11 +1,6 @@
 ﻿using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
+using System.Diagnostics;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace GameEngine.Engine
 {
@@ -17,9 +12,22 @@ namespace GameEngine.Engine
             IncludeFields = true
         };
 
-        public static void SaveScene(GameObjectManager gameObjectManager, Scene gameScene, string path)
+        public static void SaveScene(GameObjectManager gameObjectManager, Scene gameScene, string path, bool relativePath)
         {
             SceneData scene = new();
+            string savePath = path;
+            if (relativePath)
+            {
+                if (ProjectContext.Current == null)
+                    throw new InvalidOperationException("Cannot save a relative scene path without an active project.");
+
+                scene.relPath = path;
+                savePath = ProjectContext.Current.Paths.ToAbsolute(path);
+            }
+            else
+            {
+                scene.relPath = path;
+            }
 
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
@@ -55,7 +63,7 @@ namespace GameEngine.Engine
             string json = JsonSerializer.Serialize(scene, options);
 
             Console.WriteLine("Saving " + scene.gameObjects.Count + " objects");
-            File.WriteAllText(path, json);
+            File.WriteAllText(savePath, json);
         }
 
         private static List<ComponentData> SerializeComponents(GameObject gameObject)
@@ -113,6 +121,7 @@ namespace GameEngine.Engine
 
             gameScene.ambientLightIntensity = scene.ambientLightIntensity;
             gameScene.skyboxColor = Color.FromArgb(255, scene.skyboxColorR, scene.skyboxColorG, scene.skyboxColorB);
+            gameScene.relPath = scene.relPath;
         }
 
         private static void DeserializeComponents(GameObject gameObject, List<ComponentData> components)
@@ -133,6 +142,8 @@ namespace GameEngine.Engine
 
 public class SceneData
 {
+    public string relPath;
+
     public List<GameObjectData> gameObjects = new();
 
     public float ambientLightIntensity;

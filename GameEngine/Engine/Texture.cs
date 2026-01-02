@@ -3,7 +3,7 @@ using StbImageSharp;
 
 namespace GameEngine.Engine
 {
-    public class Texture
+    public class Texture : IDisposable
     {
         public int handle;
 
@@ -36,6 +36,11 @@ namespace GameEngine.Engine
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
             return new Texture(handle);
+        }
+
+        public void Dispose()
+        {
+            throw new NotImplementedException();
         }
 
         public void Use(TextureUnit unit)

@@ -1,6 +1,5 @@
 ﻿using GameEngine.Engine;
 using OpenTK.Mathematics;
-using System;
 
 namespace GameEngine.Editor
 {

@@ -1,25 +1,26 @@
-using System.Dynamic;
-using GameEngine.Editor;
 using OpenTK.Mathematics;
 
-public class Vector3Renderer : IFieldRenderer
+namespace GameEngine.Editor
 {
-    public Type ValueType => typeof(Vector3);
-
-    public event Action<object> valueChanged;
-
-    public Control CreateControl()
+    public class Vector3Renderer : IFieldRenderer
     {
-        Vector3Control control = new Vector3Control();
-        control.ValueChanged += value => valueChanged?.Invoke(value);
-        return control;
-    }
+        public Type ValueType => typeof(Vector3);
 
-    public void SetValue(Control control, object value)
-    {
-        if (control is Vector3Control vectorControl && value is Vector3 vec)
+        public event Action<object> valueChanged;
+
+        public Control CreateControl()
         {
-            vectorControl.Value = vec;
+            Vector3Control control = new Vector3Control();
+            control.ValueChanged += value => valueChanged?.Invoke(value);
+            return control;
+        }
+
+        public void SetValue(Control control, object value)
+        {
+            if (control is Vector3Control vectorControl && value is Vector3 vec)
+            {
+                vectorControl.Value = vec;
+            }
         }
     }
 }

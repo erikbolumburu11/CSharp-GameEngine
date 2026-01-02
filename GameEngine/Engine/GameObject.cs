@@ -1,8 +1,4 @@
-﻿using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
-using System;
-using System.CodeDom;
-using System.ComponentModel;
+﻿using OpenTK.Mathematics;
 
 namespace GameEngine.Engine
 {

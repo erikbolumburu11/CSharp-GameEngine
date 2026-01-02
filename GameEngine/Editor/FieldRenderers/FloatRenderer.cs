@@ -1,18 +1,21 @@
-public class FloatRenderer : IFieldRenderer
+namespace GameEngine.Editor
 {
-    public Type ValueType => typeof(float);
-    public event Action<object>? valueChanged;
-
-    public Control CreateControl()
+    public class FloatRenderer : IFieldRenderer
     {
-        var control = new FloatControl();
-        control.ValueChanged += v => valueChanged?.Invoke(v);
-        return control;
-    }
+        public Type ValueType => typeof(float);
+        public event Action<object>? valueChanged;
 
-    public void SetValue(Control control, object value)
-    {
-        if (control is FloatControl fc && value is float f)
-            fc.Value = f;
+        public Control CreateControl()
+        {
+            var control = new FloatControl();
+            control.ValueChanged += v => valueChanged?.Invoke(v);
+            return control;
+        }
+
+        public void SetValue(Control control, object value)
+        {
+            if (control is FloatControl fc && value is float f)
+                fc.Value = f;
+        }
     }
 }

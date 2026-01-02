@@ -35,8 +35,9 @@ namespace GameEngine.Editor
             File = new ToolStripDropDownButton();
             saveToolStripMenuItem = new ToolStripMenuItem();
             loadToolStripMenuItem = new ToolStripMenuItem();
-            dockPanel = new DockPanel();
             sceneSettingsButton = new ToolStripButton();
+            dockPanel = new DockPanel();
+            newProjectToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -52,7 +53,7 @@ namespace GameEngine.Editor
             // File
             // 
             File.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            File.DropDownItems.AddRange(new ToolStripItem[] { saveToolStripMenuItem, loadToolStripMenuItem });
+            File.DropDownItems.AddRange(new ToolStripItem[] { newProjectToolStripMenuItem, saveToolStripMenuItem, loadToolStripMenuItem });
             File.Image = (Image)resources.GetObject("File.Image");
             File.ImageTransparentColor = Color.Magenta;
             File.Name = "File";
@@ -63,23 +64,15 @@ namespace GameEngine.Editor
             // 
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.Size = new Size(180, 22);
-            saveToolStripMenuItem.Text = "Save";
+            saveToolStripMenuItem.Text = "Save Project";
             saveToolStripMenuItem.Click += saveToolStripMenuItem_Click;
             // 
             // loadToolStripMenuItem
             // 
             loadToolStripMenuItem.Name = "loadToolStripMenuItem";
             loadToolStripMenuItem.Size = new Size(180, 22);
-            loadToolStripMenuItem.Text = "Load";
+            loadToolStripMenuItem.Text = "Load Project";
             loadToolStripMenuItem.Click += loadToolStripMenuItem_Click;
-            // 
-            // dockPanel
-            // 
-            dockPanel.Dock = DockStyle.Fill;
-            dockPanel.Location = new Point(0, 25);
-            dockPanel.Name = "dockPanel";
-            dockPanel.Size = new Size(800, 425);
-            dockPanel.TabIndex = 1;
             // 
             // sceneSettingsButton
             // 
@@ -91,6 +84,21 @@ namespace GameEngine.Editor
             sceneSettingsButton.Text = "Scene Settings";
             sceneSettingsButton.ToolTipText = "Scene Settings";
             sceneSettingsButton.Click += sceneSettingsButton_Click;
+            // 
+            // dockPanel
+            // 
+            dockPanel.Dock = DockStyle.Fill;
+            dockPanel.Location = new Point(0, 25);
+            dockPanel.Name = "dockPanel";
+            dockPanel.Size = new Size(800, 425);
+            dockPanel.TabIndex = 1;
+            // 
+            // newProjectToolStripMenuItem
+            // 
+            newProjectToolStripMenuItem.Name = "newProjectToolStripMenuItem";
+            newProjectToolStripMenuItem.Size = new Size(180, 22);
+            newProjectToolStripMenuItem.Text = "New Project";
+            newProjectToolStripMenuItem.Click += newProjectToolStripMenuItem_Click;
             // 
             // Editor
             // 
@@ -115,5 +123,6 @@ namespace GameEngine.Editor
         private ToolStripMenuItem loadToolStripMenuItem;
         private DockPanel dockPanel;
         private ToolStripButton sceneSettingsButton;
+        private ToolStripMenuItem newProjectToolStripMenuItem;
     }
 }

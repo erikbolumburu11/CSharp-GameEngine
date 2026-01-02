@@ -1,8 +1,4 @@
-﻿using GameEngine.Editor;
-using GameEngine.Engine.Components;
-using OpenTK.GLControl;
-using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
+﻿using OpenTK.Graphics.OpenGL4;
 using System.Diagnostics;
 
 namespace GameEngine.Engine
@@ -25,10 +21,7 @@ namespace GameEngine.Engine
 
             gameObjectManager = new GameObjectManager();
 
-            scene = new Scene
-            {
-                ambientLightIntensity = 1f
-            };
+            scene = new Scene();
         }
 
         public void Initialize()
@@ -37,7 +30,6 @@ namespace GameEngine.Engine
             renderer = new Renderer();
 
             GL.Enable(EnableCap.DepthTest);
-            GameObject cube = gameObjectManager.CreateCube();
 
             Console.WriteLine("GL Version: " + GL.GetString(StringName.Version));
             Console.WriteLine("GLSL Version: " + GL.GetString(StringName.ShadingLanguageVersion));
@@ -46,12 +38,12 @@ namespace GameEngine.Engine
         public void Update(float deltaTime)
         {
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
+            {
+                foreach (var component in gameObject.Components)
                 {
-                    foreach (var component in gameObject.Components)
-                    {
-                        component.Update(deltaTime);
-                    }
+                    component.Update(deltaTime);
                 }
+            }
         }
 
         public void Render(Camera camera)

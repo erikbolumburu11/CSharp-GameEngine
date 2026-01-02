@@ -75,11 +75,18 @@ namespace GameEngine.Editor
                 ));
             }
 
-            return new Button
+            Button addComponentButton = new Button
             {
                 Text = "Add Component",
-                Width = 150
+                Width = 150,
             };
+
+            addComponentButton.Click += (s, e) =>
+            {
+                cms.Show();
+            };
+
+            return addComponentButton;
         }
 
         private void HookEvents()

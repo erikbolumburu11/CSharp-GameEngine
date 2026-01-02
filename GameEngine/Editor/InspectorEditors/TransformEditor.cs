@@ -1,22 +1,24 @@
 using GameEngine.Engine;
 using OpenTK.Mathematics;
 
-public class TransformEditor : Editor<GameObject>
+namespace GameEngine.Editor
 {
-    Transform transform;
-
-    public TransformEditor(GameObject gameObject) : base(gameObject)
+    public class TransformEditor : Editor<GameObject>
     {
-        fields.Add(new FieldDescriptor
+        Transform transform;
+
+        public TransformEditor(GameObject gameObject) : base(gameObject)
+        {
+            fields.Add(new FieldDescriptor
             {
                 label = "Position",
                 valueType = typeof(Vector3),
                 getValue = () => gameObject.transform.position,
                 setValue = value => gameObject.transform.position = (Vector3)value
             }
-        );
+            );
 
-        fields.Add(new FieldDescriptor
+            fields.Add(new FieldDescriptor
             {
                 label = "Rotation",
                 valueType = typeof(Vector3),
@@ -30,25 +32,26 @@ public class TransformEditor : Editor<GameObject>
                     );
                 }
             }
-        );
+            );
 
-        fields.Add(new FieldDescriptor
+            fields.Add(new FieldDescriptor
             {
                 label = "Scale",
                 valueType = typeof(Vector3),
                 getValue = () => gameObject.transform.scale,
                 setValue = value => gameObject.transform.scale = (Vector3)value
             }
-        );
-    }
+            );
+        }
 
-    private static Vector3 QuaternionToEulerDegrees(Quaternion rotation)
-    {
-        Vector3 eulerRadians = rotation.ToEulerAngles();
-        return new Vector3(
-            MathHelper.RadiansToDegrees(eulerRadians.X),
-            MathHelper.RadiansToDegrees(eulerRadians.Y),
-            MathHelper.RadiansToDegrees(eulerRadians.Z)
-        );
+        private static Vector3 QuaternionToEulerDegrees(Quaternion rotation)
+        {
+            Vector3 eulerRadians = rotation.ToEulerAngles();
+            return new Vector3(
+                MathHelper.RadiansToDegrees(eulerRadians.X),
+                MathHelper.RadiansToDegrees(eulerRadians.Y),
+                MathHelper.RadiansToDegrees(eulerRadians.Z)
+            );
+        }
     }
 }

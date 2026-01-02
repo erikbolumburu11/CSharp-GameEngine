@@ -1,13 +1,14 @@
-using GameEngine.Engine;
-
-public abstract class Editor<T>
+namespace GameEngine.Editor
 {
-    public T target;
-    public List<FieldDescriptor> fields;
-
-    protected Editor(T target)
+    public abstract class Editor<T>
     {
-        fields = new();
-        this.target = target;
+        public T target;
+        public List<FieldDescriptor> fields;
+
+        protected Editor(T target)
+        {
+            fields = new();
+            this.target = target;
+        }
     }
 }

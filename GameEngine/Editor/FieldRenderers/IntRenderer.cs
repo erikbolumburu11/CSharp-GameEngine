@@ -1,18 +1,21 @@
-public class IntRenderer : IFieldRenderer
+namespace GameEngine.Editor
 {
-    public Type ValueType => typeof(int);
-    public event Action<object>? valueChanged;
-
-    public Control CreateControl()
+    public class IntRenderer : IFieldRenderer
     {
-        var control = new IntControl();
-        control.ValueChanged += v => valueChanged?.Invoke(v);
-        return control;
-    }
+        public Type ValueType => typeof(int);
+        public event Action<object>? valueChanged;
 
-    public void SetValue(Control control, object value)
-    {
-        if (control is IntControl ic && value is int i)
-            ic.Value = i;
+        public Control CreateControl()
+        {
+            var control = new IntControl();
+            control.ValueChanged += v => valueChanged?.Invoke(v);
+            return control;
+        }
+
+        public void SetValue(Control control, object value)
+        {
+            if (control is IntControl ic && value is int i)
+                ic.Value = i;
+        }
     }
 }

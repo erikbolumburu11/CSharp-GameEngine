@@ -1,9 +1,4 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameEngine.Engine.Components
 {
@@ -12,6 +7,7 @@ namespace GameEngine.Engine.Components
         public VertexArray vao { get; private set; }
         public VertexBuffer<float> vbo { get; private set; }
 
+        public Material material;
         public Shader shader;
         public Texture texture;
 

@@ -1,10 +1,13 @@
-public interface IFieldRenderer
+namespace GameEngine.Editor
 {
-    Type ValueType { get; }
+    public interface IFieldRenderer
+    {
+        Type ValueType { get; }
 
-    public Control CreateControl();
+        public Control CreateControl();
 
-    public void SetValue(Control control, object value);
+        public void SetValue(Control control, object value);
 
-    event Action<object> valueChanged;
+        event Action<object> valueChanged;
+    }
 }
