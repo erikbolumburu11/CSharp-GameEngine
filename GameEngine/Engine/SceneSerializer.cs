@@ -1,182 +1,180 @@
 ﻿using OpenTK.Mathematics;
-using System.Diagnostics;
 using System.Text.Json;
 
-namespace GameEngine.Engine
-{
+namespace GameEngine.Engine {
     public static class SceneSerializer
     {
-        public static JsonSerializerOptions options = new JsonSerializerOptions
+        private static readonly JsonSerializerOptions Options = new()
         {
             WriteIndented = true,
-            IncludeFields = true
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip
         };
 
         public static void SaveScene(GameObjectManager gameObjectManager, Scene gameScene, string path, bool relativePath)
         {
-            SceneData scene = new();
+            var dto = new SceneDto();
+
             string savePath = path;
             if (relativePath)
             {
                 if (ProjectContext.Current == null)
                     throw new InvalidOperationException("Cannot save a relative scene path without an active project.");
 
-                scene.relPath = path;
+                dto.RelPath = path;
                 savePath = ProjectContext.Current.Paths.ToAbsolute(path);
             }
             else
             {
-                scene.relPath = path;
+                dto.RelPath = path;
             }
 
-            foreach (GameObject gameObject in gameObjectManager.gameObjects)
-            {
-                GameObjectData gameObjectData = new GameObjectData
-                {
-                    name = gameObject.name,
-                    transform = new TransformData
-                    {
-                        positionX = gameObject.transform.position.X,
-                        positionY = gameObject.transform.position.Y,
-                        positionZ = gameObject.transform.position.Z,
+            foreach (var gameObject in gameObjectManager.gameObjects)
+                dto.GameObjects.Add(ToDto(gameObject));
 
-                        rotationX = gameObject.transform.rotation.X,
-                        rotationY = gameObject.transform.rotation.Y,
-                        rotationZ = gameObject.transform.rotation.Z,
+            dto.AmbientLightIntensity = gameScene.ambientLightIntensity;
+            dto.SkyboxColorR = gameScene.skyboxColor.R;
+            dto.SkyboxColorG = gameScene.skyboxColor.G;
+            dto.SkyboxColorB = gameScene.skyboxColor.B;
 
-                        scaleX = gameObject.transform.scale.X,
-                        scaleY = gameObject.transform.scale.Y,
-                        scaleZ = gameObject.transform.scale.Z,
-                    },
-                    components = SerializeComponents(gameObject)
-                };
-
-                scene.gameObjects.Add(gameObjectData);
-            }
-
-            scene.ambientLightIntensity = gameScene.ambientLightIntensity;
-
-            scene.skyboxColorR = gameScene.skyboxColor.R;
-            scene.skyboxColorG = gameScene.skyboxColor.G;
-            scene.skyboxColorB = gameScene.skyboxColor.B;
-
-            string json = JsonSerializer.Serialize(scene, options);
-
-            Console.WriteLine("Saving " + scene.gameObjects.Count + " objects");
+            string json = JsonSerializer.Serialize(dto, Options);
             File.WriteAllText(savePath, json);
         }
 
-        private static List<ComponentData> SerializeComponents(GameObject gameObject)
+        public static void LoadScene(GameObjectManager gameObjectManager, Scene gameScene, string absolutePath)
         {
-            List<ComponentData> componentData = new();
-            foreach (var c in gameObject.Components)
-            {
-                if (c is IComponentSerializable serializable)
-                {
-                    componentData.Add(new ComponentData
-                    {
-                        type = ComponentTypeRegistry.Get(c.GetType()),
-                        fields = serializable.Save()
-                    });
-                }
-            }
-
-            return componentData;
-        }
-
-        public static void LoadScene(GameObjectManager gameObjectManager, Scene gameScene, string path)
-        {
-            string json = File.ReadAllText(path);
-            SceneData scene = JsonSerializer.Deserialize<SceneData>(json, options);
+            string json = File.ReadAllText(absolutePath);
+            var dto = JsonSerializer.Deserialize<SceneDto>(json, Options)
+                        ?? throw new InvalidOperationException("Invalid scene file.");
 
             gameObjectManager.Clear();
 
-            foreach (GameObjectData data in scene.gameObjects)
+            foreach (var goDto in dto.GameObjects)
             {
-                GameObject gameObject = gameObjectManager.CreateGameObject(data.name);
+                var go = gameObjectManager.CreateGameObject(goDto.Name);
 
-                gameObject.transform.position = new Vector3
-                (
-                    data.transform.positionX,
-                    data.transform.positionY,
-                    data.transform.positionZ
-                );
+                go.transform.position = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
+                go.transform.rotation = new Quaternion(goDto.Transform.RotationX, goDto.Transform.RotationY, goDto.Transform.RotationZ);
+                go.transform.scale    = new Vector3(goDto.Transform.ScaleX, goDto.Transform.ScaleY, goDto.Transform.ScaleZ);
 
-                gameObject.transform.rotation = new Quaternion
-                (
-                    data.transform.rotationX,
-                    data.transform.rotationY,
-                    data.transform.rotationZ
-                );
-
-                gameObject.transform.scale = new Vector3
-                (
-                    data.transform.scaleX,
-                    data.transform.scaleY,
-                    data.transform.scaleZ
-                );
-
-                DeserializeComponents(gameObject, data.components);
+                DeserializeComponents(go, goDto.Components);
             }
 
-            gameScene.ambientLightIntensity = scene.ambientLightIntensity;
-            gameScene.skyboxColor = Color.FromArgb(255, scene.skyboxColorR, scene.skyboxColorG, scene.skyboxColorB);
-            gameScene.relPath = scene.relPath;
+            gameScene.ambientLightIntensity = dto.AmbientLightIntensity;
+            gameScene.skyboxColor = Color.FromArgb(255, dto.SkyboxColorR, dto.SkyboxColorG, dto.SkyboxColorB);
+            gameScene.relPath = dto.RelPath;
         }
 
-        private static void DeserializeComponents(GameObject gameObject, List<ComponentData> components)
+        private static GameObjectDto ToDto(GameObject gameObject)
         {
-            foreach (ComponentData compData in components)
+            var goDto = new GameObjectDto
             {
-                var type = ComponentTypeRegistry.Get(compData.type);
-                var comp = (Component)Activator.CreateInstance(type);
+                Name = gameObject.name,
+                Transform = new TransformDto
+                {
+                    PositionX = gameObject.transform.position.X,
+                    PositionY = gameObject.transform.position.Y,
+                    PositionZ = gameObject.transform.position.Z,
 
-                if (comp is IComponentSerializable serializable)
-                    serializable.Load(compData.fields);
+                    RotationX = gameObject.transform.rotation.X,
+                    RotationY = gameObject.transform.rotation.Y,
+                    RotationZ = gameObject.transform.rotation.Z,
+
+                    ScaleX = gameObject.transform.scale.X,
+                    ScaleY = gameObject.transform.scale.Y,
+                    ScaleZ = gameObject.transform.scale.Z,
+                }
+            };
+
+            foreach (var c in gameObject.Components)
+            {
+                // Keep your registry key system:
+                string typeKey = ComponentTypeRegistry.Get(c.GetType());
+
+                // Only serialize registered components
+                // (you could log warnings for unregistered types)
+                try
+                {
+                    object cDto = ComponentDtoRegistry.ToDto(c, typeKey);
+
+                    // Serialize DTO to a JsonElement blob
+                    JsonElement elem = JsonSerializer.SerializeToElement(cDto, cDto.GetType(), Options);
+
+                    goDto.Components.Add(new ComponentEntryDto
+                    {
+                        Type = typeKey,
+                        Data = elem
+                    });
+                }
+                catch
+                {
+                    // Not registered or failed to serialize; skip or log
+                }
+            }
+
+            return goDto;
+        }
+
+        private static void DeserializeComponents(GameObject gameObject, List<ComponentEntryDto> components)
+        {
+            foreach (var entry in components)
+            {
+                if (!ComponentDtoRegistry.TryCreate(entry.Type, out var comp))
+                {
+                    // Unknown component type - skip (or log)
+                    continue;
+                }
+
+                var dtoType = ComponentDtoRegistry.GetDtoType(entry.Type);
+
+                object dtoObj = entry.Data.Deserialize(dtoType, Options)
+                                ?? throw new InvalidOperationException($"Invalid component data for '{entry.Type}'.");
+
+                ComponentDtoRegistry.FromDto(comp, entry.Type, dtoObj);
 
                 gameObject.AddComponent(comp);
             }
         }
     }
-}
 
-public class SceneData
-{
-    public string relPath;
+    public sealed class SceneDto
+    {
+        public string? RelPath { get; set; }
 
-    public List<GameObjectData> gameObjects = new();
+        public float AmbientLightIntensity { get; set; }
 
-    public float ambientLightIntensity;
+        public int SkyboxColorR { get; set; }
+        public int SkyboxColorG { get; set; }
+        public int SkyboxColorB { get; set; }
 
-    public int skyboxColorR;
-    public int skyboxColorG;
-    public int skyboxColorB;
-}
+        public List<GameObjectDto> GameObjects { get; set; } = new();
+    }
 
-public class GameObjectData
-{
-    public string name;
-    public TransformData transform;
-    public List<ComponentData> components = new();
-}
+    public sealed class GameObjectDto
+    {
+        public string Name { get; set; } = "GameObject";
+        public TransformDto Transform { get; set; } = new();
+        public List<ComponentEntryDto> Components { get; set; } = new();
+    }
 
-public class TransformData
-{
-    public float positionX;
-    public float positionY;
-    public float positionZ;
+    public sealed class TransformDto
+    {
+        public float PositionX { get; set; }
+        public float PositionY { get; set; }
+        public float PositionZ { get; set; }
 
-    public float rotationX;
-    public float rotationY;
-    public float rotationZ;
+        public float RotationX { get; set; }
+        public float RotationY { get; set; }
+        public float RotationZ { get; set; }
 
-    public float scaleX = 1f;
-    public float scaleY = 1f;
-    public float scaleZ = 1f;
-}
+        public float ScaleX { get; set; } = 1f;
+        public float ScaleY { get; set; } = 1f;
+        public float ScaleZ { get; set; } = 1f;
+    }
 
-public class ComponentData
-{
-    public string type;
-    public Dictionary<string, object> fields;
+    public sealed class ComponentEntryDto
+    {
+        public string Type { get; set; } = "";
+        public JsonElement Data { get; set; }
+    }
 }

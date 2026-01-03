@@ -13,37 +13,36 @@ namespace GameEngine.Engine.Components
         public float specularStrength;
     }
 
-    public class Light : Component, IComponentSerializable
+    public record LightDto
+    (
+        float intensity,
+        float[] color,
+        float radius,
+        float specularStrength
+    );
+
+    public class Light : Component
     {
         [ExposeInInspector] public float intensity = 1f;
         public Vector3 color = new(255, 255, 255);
         [ExposeInInspector] public float radius = 3f;
         [ExposeInInspector] public float specularStrength = 0.5f;
 
-        public Dictionary<string, object> Save()
-        {
-            return new Dictionary<string, object>()
-            {
-                ["intensity"] = intensity,
-                ["colorR"] = color.X,
-                ["colorG"] = color.Y,
-                ["colorB"] = color.Z,
-                ["radius"] = radius,
-                ["specularStrength"] = specularStrength
-            };
-        }
+        public LightDto ToDto() => new
+        (
+            intensity: intensity,
+            color: new[] {color.X, color.Y, color.Z},
+            radius: radius,
+            specularStrength: specularStrength
+        );
 
-        public void Load(Dictionary<string, object> data)
+        public void FromDto(LightDto dto)
         {
-            intensity = (float)Util.GetObjectValue(data["intensity"]);
-            color = new Vector3
-            (
-                (float)Util.GetObjectValue(data["colorR"]),
-                (float)Util.GetObjectValue(data["colorG"]),
-                (float)Util.GetObjectValue(data["colorB"])
-            );
-            radius = (float)Util.GetObjectValue(data["radius"]);
-            specularStrength = (float)Util.GetObjectValue(data["specularStrength"]);
+            intensity = dto.intensity;
+            if (dto.color is { Length: >= 3 })
+                color = new Vector3(dto.color[0], dto.color[1], dto.color[2]);
+            radius = dto.radius;
+            specularStrength = dto.specularStrength;
         }
 
         public LightData ToLightData()
