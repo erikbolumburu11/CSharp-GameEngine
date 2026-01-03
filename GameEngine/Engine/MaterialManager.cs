@@ -20,10 +20,9 @@ namespace GameEngine.Engine
             if (materials.TryGetValue(path, out var mat))
                 return mat;
 
-            // mat = LoadFromFile(path);
-            // materials[path] = mat;
-            // return mat;
-            return defaultMat;
+            mat = MaterialSerializer.LoadMaterial(path);
+            materials[path] = mat;
+            return mat;
         }
 
         public void Dispose()

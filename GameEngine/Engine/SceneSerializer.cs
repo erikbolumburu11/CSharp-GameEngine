@@ -13,7 +13,7 @@ namespace GameEngine.Engine {
 
         public static void SaveScene(GameObjectManager gameObjectManager, Scene gameScene, string path, bool relativePath)
         {
-            var dto = new SceneDto();
+            SceneDto dto = new SceneDto();
 
             string savePath = path;
             if (relativePath)
