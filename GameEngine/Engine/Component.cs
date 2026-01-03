@@ -5,6 +5,7 @@
         Dictionary<string, object> Save();
         void Load(Dictionary<string, object> data);
     }
+
     public class Component
     {
         public virtual string name => GetType().Name;

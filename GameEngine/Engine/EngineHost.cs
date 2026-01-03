@@ -4,10 +4,11 @@ namespace GameEngine.Engine
 {
     public class EngineHost : IDisposable
     {
-        public TextureManager textureManager;
 
         Renderer renderer;
         public LightManager lightManager { get; private set; }
+        public TextureManager textureManager { get; private set; }
+        public MaterialManager materialManager { get; private set; }
 
         public Game game;
 
@@ -18,6 +19,7 @@ namespace GameEngine.Engine
             game = new Game();
 
             textureManager = new TextureManager();
+            materialManager = new MaterialManager();
             renderer = new Renderer();
         }
 
@@ -30,7 +32,8 @@ namespace GameEngine.Engine
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Multisample);
 
-            textureManager.InitializeTextures();
+            textureManager.InitializeDefaultTextures();
+            materialManager.InitializeDefaultMaterials();
             lightManager = new();
 
             glInitialized = true;
