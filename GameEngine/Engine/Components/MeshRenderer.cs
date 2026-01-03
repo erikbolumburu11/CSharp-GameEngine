@@ -4,7 +4,6 @@ namespace GameEngine.Engine.Components
 {
     public record MeshRendererDto
     (
-        
     );
 
     public class MeshRenderer : Component
@@ -75,6 +74,14 @@ namespace GameEngine.Engine.Components
 
             vbo.Unbind();
             vao.Unbind();
+        }
+
+        public MeshRendererDto ToDto() => new
+        (
+        );
+
+        public void FromDto(MeshRendererDto dto)
+        {
         }
 
         public void SetTexture(string path) => texturePath = path;

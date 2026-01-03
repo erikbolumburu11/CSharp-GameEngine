@@ -66,9 +66,15 @@ namespace GameEngine.Engine
         public void RegisterComponents()
         {
             ComponentDtoRegistry.Register<Light, LightDto>(
-                typeKey: "Light",
+                typeKey: ComponentTypeRegistry.Get(typeof(Light)),
                 toDto: l => l.ToDto(),
                 fromDto: (l, dto) => l.FromDto(dto)
+            );
+
+            ComponentDtoRegistry.Register<MeshRenderer, MeshRendererDto>(
+                typeKey: ComponentTypeRegistry.Get(typeof(MeshRenderer)),
+                toDto: mr => mr.ToDto(),
+                fromDto: (mr, dto) => mr.FromDto(dto)
             );
         }
 
