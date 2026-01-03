@@ -88,16 +88,12 @@ namespace GameEngine.Engine {
 
             foreach (var c in gameObject.Components)
             {
-                // Keep your registry key system:
                 string typeKey = ComponentTypeRegistry.Get(c.GetType());
 
-                // Only serialize registered components
-                // (you could log warnings for unregistered types)
                 try
                 {
                     object cDto = ComponentDtoRegistry.ToDto(c, typeKey);
 
-                    // Serialize DTO to a JsonElement blob
                     JsonElement elem = JsonSerializer.SerializeToElement(cDto, cDto.GetType(), Options);
 
                     goDto.Components.Add(new ComponentEntryDto
@@ -121,7 +117,6 @@ namespace GameEngine.Engine {
             {
                 if (!ComponentDtoRegistry.TryCreate(entry.Type, out var comp))
                 {
-                    // Unknown component type - skip (or log)
                     continue;
                 }
 
