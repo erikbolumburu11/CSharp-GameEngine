@@ -21,7 +21,6 @@ namespace GameEngine.Editor
             {
                 Text = "Ambient Light Intensity:"
             };
-            // TODO: This is broken!
             TextBox ambientLightIntensityTextBox = new TextBox
             {
                 Text = scene.ambientLightIntensity.ToString()

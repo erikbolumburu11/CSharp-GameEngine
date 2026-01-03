@@ -25,6 +25,9 @@ namespace GameEngine.Editor
         {
             InitializeComponent();
 
+            StartPosition = FormStartPosition.CenterScreen;
+            ClientSize = new Size(1280, 720); 
+
             dockPanel.Theme = new VS2012DarkTheme();
             dockPanel.DocumentTabStripLocation = DocumentTabStripLocation.Top;
 
@@ -87,6 +90,7 @@ namespace GameEngine.Editor
         private void glControl_Load(object? sender, EventArgs e)
         {
             sceneView.glControl.MakeCurrent();
+            sceneView.glControl.Context.SwapInterval = 1;
             editorState.engineHost.InitializeGL();
         }
 

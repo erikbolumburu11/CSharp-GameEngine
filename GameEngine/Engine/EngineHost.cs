@@ -26,7 +26,9 @@ namespace GameEngine.Engine
             Console.WriteLine("GL Version: " + GL.GetString(StringName.Version));
             Console.WriteLine("GLSL Version: " + GL.GetString(StringName.ShadingLanguageVersion));
 
+
             GL.Enable(EnableCap.DepthTest);
+            GL.Enable(EnableCap.Multisample);
 
             textureManager.InitializeTextures();
             lightManager = new();
