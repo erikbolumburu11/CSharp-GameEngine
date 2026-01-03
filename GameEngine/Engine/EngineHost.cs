@@ -1,3 +1,4 @@
+using GameEngine.Engine.Components;
 using OpenTK.Graphics.OpenGL4;
 
 namespace GameEngine.Engine
@@ -16,6 +17,8 @@ namespace GameEngine.Engine
 
         public EngineHost()
         {
+            RegisterComponents();
+
             game = new Game();
 
             textureManager = new TextureManager();
@@ -58,6 +61,21 @@ namespace GameEngine.Engine
                     component.Update(deltaTime);
                 }
             }
+        }
+
+        public void RegisterComponents()
+        {
+            ComponentDtoRegistry.Register<Light, LightDto>(
+                typeKey: ComponentTypeRegistry.Get(typeof(Light)),
+                toDto: l => l.ToDto(),
+                fromDto: (l, dto) => l.FromDto(dto)
+            );
+
+            ComponentDtoRegistry.Register<MeshRenderer, MeshRendererDto>(
+                typeKey: ComponentTypeRegistry.Get(typeof(MeshRenderer)),
+                toDto: mr => mr.ToDto(),
+                fromDto: (mr, dto) => mr.FromDto(dto)
+            );
         }
 
         public void Dispose()

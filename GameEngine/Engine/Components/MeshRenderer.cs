@@ -2,7 +2,11 @@
 
 namespace GameEngine.Engine.Components
 {
-    public class MeshRenderer : Component, IComponentSerializable
+    public record MeshRendererDto
+    (
+    );
+
+    public class MeshRenderer : Component
     {
         public VertexArray vao { get; private set; }
         public VertexBuffer<float> vbo { get; private set; }
@@ -72,15 +76,14 @@ namespace GameEngine.Engine.Components
             vao.Unbind();
         }
 
+        public MeshRendererDto ToDto() => new
+        (
+        );
+
+        public void FromDto(MeshRendererDto dto)
+        {
+        }
+
         public void SetTexture(string path) => texturePath = path;
-
-        public Dictionary<string, object> Save()
-        {
-            return new Dictionary<string, object>();
-        }
-
-        public void Load(Dictionary<string, object> data)
-        {
-        }
     }
 }
