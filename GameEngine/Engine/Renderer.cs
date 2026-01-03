@@ -11,6 +11,7 @@ namespace GameEngine.Engine
 
         public void Render
         (
+            TextureManager textureManager,
             GameObjectManager gameObjectManager,
             LightManager lightManager,
             Scene scene,
@@ -41,7 +42,8 @@ namespace GameEngine.Engine
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
-                meshRenderer.texture.Use(TextureUnit.Texture0);
+                Texture texture = textureManager.Get(meshRenderer.texturePath);
+                texture.Use(TextureUnit.Texture0);
 
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);

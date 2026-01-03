@@ -7,11 +7,11 @@ namespace GameEngine.Editor
         public GameObject SelectedObject { get; private set; }
         public event Action<GameObject> OnSelectionChanged;
 
-        public Game game { get; private set; }
+        public EngineHost engineHost;
 
         public EditorState()
         {
-            game = new Game();
+            engineHost = new EngineHost();
         }
 
         public void Select(GameObject obj)

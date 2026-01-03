@@ -9,16 +9,13 @@ namespace GameEngine.Engine.Components
 
         public Material material;
         public Shader shader;
-        public Texture texture;
-
-        [ExposeInInspector] float inspectorTestFloat;
+        public string texturePath;
 
         public override void Start()
         {
             base.Start();
             CreateBuffers();
             CreateShader();
-            LoadTexture();
         }
 
         void CreateBuffers()
@@ -75,12 +72,7 @@ namespace GameEngine.Engine.Components
             vao.Unbind();
         }
 
-        // TODO: Textures should be in a dictionary or something to avoid creating the same texture
-        //       multiple times
-        void LoadTexture()
-        {
-            texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
-        }
+        public void SetTexture(string path) => texturePath = path;
 
         public Dictionary<string, object> Save()
         {

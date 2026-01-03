@@ -35,10 +35,10 @@ namespace GameEngine.Editor
             camera = new EditorCamera(new Vector3(0, 0, 6), 0.5f, 1.5f, inputHandler, sceneView.Width, sceneView.Height);
             editorState = new();
 
-            objectHierarchy = new ObjectHierarchy(editorState.game.gameObjectManager, editorState);
+            objectHierarchy = new ObjectHierarchy(editorState.engineHost.game.gameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
 
-            inspector = new Inspector(editorState, editorState.game.gameObjectManager);
+            inspector = new Inspector(editorState, editorState.engineHost.game.gameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
 
             materialEditor = new MaterialEditor();
@@ -77,9 +77,9 @@ namespace GameEngine.Editor
                 float dt = (float)timer.Elapsed.TotalSeconds;
                 timer.Restart();
 
-                editorState.game.Update(dt);
+                editorState.engineHost.Update(dt);
                 camera.Update(inputHandler, dt);
-                editorState.game.Render(camera);
+                editorState.engineHost.Render(camera);
                 sceneView.glControl.SwapBuffers();
             }
         }
@@ -87,7 +87,7 @@ namespace GameEngine.Editor
         private void glControl_Load(object? sender, EventArgs e)
         {
             sceneView.glControl.MakeCurrent();
-            editorState.game.Initialize();
+            editorState.engineHost.InitializeGL();
         }
 
         private void glControl_Paint(object? sender, PaintEventArgs e)
@@ -97,9 +97,9 @@ namespace GameEngine.Editor
             float dt = (float)timer.Elapsed.TotalSeconds;
             timer.Restart();
 
-            editorState.game.Update(dt);
+            editorState.engineHost.Update(dt);
             camera.Update(inputHandler, dt);
-            editorState.game.Render(camera);
+            editorState.engineHost.Render(camera);
 
             sceneView.glControl.SwapBuffers();
         }
@@ -145,9 +145,9 @@ namespace GameEngine.Editor
                     return;
             }
 
-            string? relPath = string.IsNullOrWhiteSpace(editorState.game.scene.relPath)
+            string? relPath = string.IsNullOrWhiteSpace(editorState.engineHost.game.scene.relPath)
                 ? ProjectContext.Current?.StartSceneRelative
-                : editorState.game.scene.relPath;
+                : editorState.engineHost.game.scene.relPath;
 
             if (string.IsNullOrWhiteSpace(relPath))
             {
@@ -163,13 +163,13 @@ namespace GameEngine.Editor
 
             SceneSerializer.SaveScene
             (
-                editorState.game.gameObjectManager,
-                editorState.game.scene,
+                editorState.engineHost.game.gameObjectManager,
+                editorState.engineHost.game.scene,
                 relPath,
                 true
             );
 
-            editorState.game.scene.relPath = relPath;
+            editorState.engineHost.game.scene.relPath = relPath;
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
@@ -179,7 +179,7 @@ namespace GameEngine.Editor
 
         private void sceneSettingsButton_Click(object sender, EventArgs e)
         {
-            SceneSettings sceneSettings = new(editorState.game.scene);
+            SceneSettings sceneSettings = new(editorState.engineHost.game.scene);
             sceneSettings.Show();
         }
 
