@@ -4,6 +4,7 @@ struct Light
 {
     vec4 positionIntensity;
     vec4 colorRadius;
+    vec4 directionType;
     vec4 specularPadding;
 };
 
@@ -37,28 +38,45 @@ void main()
     {
         vec3 norm = normalize(normal);
 
-        vec3 lightDir = lights[i].positionIntensity.xyz - fragPos;
-        float distance = length(lightDir);
+        int type = int(lights[i].directionType.w + 0.5);
 
-        if (distance > lights[i].colorRadius.w)
-            continue;
+        vec3 lightDir;
+        float attenuation = 1.0;
 
-        lightDir = normalize(lightDir);
+        if (type == 0) // POINT
+        {
+            vec3 toLight = lights[i].positionIntensity.xyz - fragPos;
+            float distance = length(toLight);
+
+            if (distance > lights[i].colorRadius.w)
+                continue;
+
+            lightDir = normalize(toLight);
+
+            attenuation = 1.0 - (distance / lights[i].colorRadius.w);
+            attenuation = clamp(attenuation, 0.0, 1.0);
+            attenuation *= attenuation;
+        }
+        else // DIRECTIONAL
+        {
+            lightDir = normalize(-lights[i].directionType.xyz);
+            attenuation = 1.0;
+        }
 
         float diff = max(dot(norm, lightDir), 0.0);
-
-        float attenuation = 1.0 - (distance / lights[i].colorRadius.w);
-        attenuation = clamp(attenuation, 0.0, 1.0);
-        attenuation *= attenuation; // smoother falloff
 
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
 
         float specMask = specTexColor.r;
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        vec3 specular = lights[i].specularPadding.x * spec * specMask * lights[i].colorRadius.rgb;
 
-        lighting += lights[i].colorRadius.rgb * diff * lights[i].positionIntensity.w * attenuation + specular * attenuation;
+        vec3 lightColor = lights[i].colorRadius.rgb;
+
+        vec3 specular = lights[i].specularPadding.x * spec * specMask * lightColor;
+
+        lighting += lightColor * diff * lights[i].positionIntensity.w * attenuation
+                + specular * attenuation;
     }
 
     FragColor = vec4(diffTexColor * (lighting + vec3(ambientIntensity)), 1.0);
