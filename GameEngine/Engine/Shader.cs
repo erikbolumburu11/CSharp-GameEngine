@@ -128,6 +128,12 @@ namespace GameEngine.Engine
             GL.Uniform3(uniformLocations[name], data);
         }
 
+        public void SetVector2(string name, Vector2 data)
+        {
+            GL.UseProgram(Handle);
+            GL.Uniform2(uniformLocations[name], data);
+        }
+
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)

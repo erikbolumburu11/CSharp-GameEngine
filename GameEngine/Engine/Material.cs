@@ -1,18 +1,25 @@
 using System.Text.Json;
+using OpenTK.Mathematics;
 
 namespace GameEngine.Engine
 {
     public record MaterialDto
     (
         string diffuseTex,
-        string specularTex
+        string specularTex,
+        float[] uvTiling,
+        float[] uvOffset
     );
 
     public class Material
     {
         public string relPath;
+
         public string? diffuseTex;
         public string? specularTex;
+
+        public Vector2 uvTiling = new(1f, 1f);
+        public Vector2 uvOffset = new(0f, 0f);
 
         public Texture GetDiffuse(TextureManager textureManager)
         {
@@ -51,13 +58,21 @@ namespace GameEngine.Engine
         public MaterialDto ToDto() => new
         (
             diffuseTex: diffuseTex,
-            specularTex: specularTex
+            specularTex: specularTex,
+            uvTiling: new[] { uvTiling.X, uvTiling.Y },
+            uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
 
         public void FromDto(MaterialDto dto)
         {
             diffuseTex = dto.diffuseTex;
             specularTex = dto.specularTex;
+
+            if (dto.uvTiling is { Length: >= 2 })
+                uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);
+
+            if (dto.uvOffset is { Length: >= 2 })
+                uvOffset = new Vector2(dto.uvOffset[0], dto.uvOffset[1]);
         }
     }
 

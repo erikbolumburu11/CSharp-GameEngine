@@ -8,6 +8,9 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform vec2 uvTiling;
+uniform vec2 uvOffset;
+
 out vec3 normal;
 out vec3 fragPos;       // world-space position
 out vec2 texCoord;      
@@ -17,5 +20,5 @@ void main()
     gl_Position = vec4(aPosition, 1.0f) * model * view * projection; 
     fragPos = vec3(vec4(aPosition, 1.0f) * model);
     normal = mat3(transpose(inverse(model))) * aNormal;
-    texCoord = aTexCoord;
+    texCoord = aTexCoord * uvTiling + uvOffset;
 }
