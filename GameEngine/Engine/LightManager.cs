@@ -1,4 +1,5 @@
-﻿using GameEngine.Engine.Components;
+﻿using System.Runtime.InteropServices;
+using GameEngine.Engine.Components;
 
 namespace GameEngine.Engine
 {
@@ -9,7 +10,8 @@ namespace GameEngine.Engine
 
         public LightManager()
         {
-            lightSSBO = new SSBO(1024 * 16);
+            int maxLights = 256;
+            lightSSBO = new SSBO(maxLights * Marshal.SizeOf<LightData>());
         }
 
         public void UploadLights()
