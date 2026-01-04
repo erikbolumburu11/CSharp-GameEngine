@@ -1,28 +1,25 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameEngine.Engine.Components
 {
-    public class MeshRenderer : Component, IComponentSerializable
+    public record MeshRendererDto
+    (
+        string material
+    );
+
+    public class MeshRenderer : Component
     {
         public VertexArray vao { get; private set; }
         public VertexBuffer<float> vbo { get; private set; }
 
+        public string? material;
         public Shader shader;
-        public Texture texture;
-
-        [ExposeInInspector] float inspectorTestFloat;
 
         public override void Start()
         {
             base.Start();
             CreateBuffers();
             CreateShader();
-            LoadTexture();
         }
 
         void CreateBuffers()
@@ -79,20 +76,14 @@ namespace GameEngine.Engine.Components
             vao.Unbind();
         }
 
-        // TODO: Textures should be in a dictionary or something to avoid creating the same texture
-        //       multiple times
-        void LoadTexture()
-        {
-            texture = Texture.LoadFromFile(Util.GetProjectDir() + "/Resources/Textures/container.jpg");
-        }
+        public MeshRendererDto ToDto() => new
+        (
+            material: material
+        );
 
-        public Dictionary<string, object> Save()
+        public void FromDto(MeshRendererDto dto)
         {
-            return new Dictionary<string, object>();
-        }
-
-        public void Load(Dictionary<string, object> data)
-        {
+            material = dto.material;
         }
     }
 }

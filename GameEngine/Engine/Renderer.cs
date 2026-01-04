@@ -1,5 +1,4 @@
-﻿using GameEngine.Editor;
-using GameEngine.Engine.Components;
+﻿using GameEngine.Engine.Components;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -12,7 +11,9 @@ namespace GameEngine.Engine
 
         public void Render
         (
-            GameObjectManager gameObjectManager, 
+            MaterialManager materialManager,
+            TextureManager textureManager,
+            GameObjectManager gameObjectManager,
             LightManager lightManager,
             Scene scene,
             Camera camera
@@ -42,7 +43,13 @@ namespace GameEngine.Engine
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
-                meshRenderer.texture.Use(TextureUnit.Texture0);
+                Material material = materialManager.Get(meshRenderer.material);
+
+                material.GetDiffuse(textureManager).Use(TextureUnit.Texture0);
+                shader.SetInt("diffuseTexture", 0);
+
+                material.GetSpecular(textureManager).Use(TextureUnit.Texture1);
+                shader.SetInt("specularTexture", 1);
 
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);

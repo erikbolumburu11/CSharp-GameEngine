@@ -1,15 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace GameEngine.Engine
+﻿namespace GameEngine.Engine
 {
     public class Scene
     {
-        public float ambientLightIntensity = 0.1f;
+        public string relPath;
 
+        public float ambientLightIntensity = 0.1f;
         public Color skyboxColor;
+
+        public Scene(){}
+
+        public Scene(string relPath)
+        {
+            this.relPath = relPath;
+        }
+
     }
 }

@@ -1,9 +1,4 @@
 ﻿using GameEngine.Engine;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine.Editor
@@ -26,15 +21,14 @@ namespace GameEngine.Editor
             {
                 Text = "Ambient Light Intensity:"
             };
-            // TODO: This is broken!
             TextBox ambientLightIntensityTextBox = new TextBox
             {
                 Text = scene.ambientLightIntensity.ToString()
             };
             ambientLightIntensityTextBox.TextChanged += (s, e) =>
             {
-                if(float.TryParse(ambientLightIntensityTextBox.Text, out float value));
-                    scene.ambientLightIntensity = value; 
+                if (float.TryParse(ambientLightIntensityTextBox.Text, out float value)) ;
+                scene.ambientLightIntensity = value;
             };
 
             Label skyboxColorLabel = new Label
@@ -51,7 +45,7 @@ namespace GameEngine.Editor
             };
             skyBoxColorButton.Click += (s, e) =>
             {
-                if(skyboxColorDialog.ShowDialog() == DialogResult.OK)
+                if (skyboxColorDialog.ShowDialog() == DialogResult.OK)
                 {
                     scene.skyboxColor = skyboxColorDialog.Color;
                 }

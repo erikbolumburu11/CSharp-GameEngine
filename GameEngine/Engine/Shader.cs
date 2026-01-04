@@ -1,10 +1,5 @@
 ﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GameEngine.Engine
 {
@@ -109,7 +104,7 @@ namespace GameEngine.Engine
             return GL.GetAttribLocation(Handle, attribName);
         }
 
-             public void SetInt(string name, int data)
+        public void SetInt(string name, int data)
         {
             GL.UseProgram(Handle);
             GL.Uniform1(uniformLocations[name], data);

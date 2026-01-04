@@ -9,8 +9,6 @@ namespace GameEngine.Editor
 {
     public partial class Editor : Form
     {
-
-        Game game;
         Stopwatch timer;
 
         InputHandler inputHandler;
@@ -18,31 +16,38 @@ namespace GameEngine.Editor
 
         EditorState editorState;
 
-
         SceneView sceneView;
         ObjectHierarchy objectHierarchy;
         Inspector inspector;
+        MaterialEditor materialEditor;
 
         public Editor()
         {
             InitializeComponent();
 
+            StartPosition = FormStartPosition.CenterScreen;
+            ClientSize = new Size(1280, 720); 
+
             dockPanel.Theme = new VS2012DarkTheme();
+            dockPanel.DocumentTabStripLocation = DocumentTabStripLocation.Top;
 
             sceneView = new SceneView();
             sceneView.Show(dockPanel, DockState.Document);
-
-            game = new Game();
 
             inputHandler = new();
             camera = new EditorCamera(new Vector3(0, 0, 6), 0.5f, 1.5f, inputHandler, sceneView.Width, sceneView.Height);
             editorState = new();
 
-            objectHierarchy = new ObjectHierarchy(game.gameObjectManager, editorState);
+            objectHierarchy = new ObjectHierarchy(editorState.engineHost.game.gameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
 
-            inspector = new Inspector(editorState, game.gameObjectManager);
+            inspector = new Inspector(editorState, editorState.engineHost.game.gameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
+
+            materialEditor = new MaterialEditor(editorState);
+            materialEditor.Show(dockPanel, DockState.DockRight);
+
+            inspector.Activate();
 
             timer = new Stopwatch();
             timer.Start();
@@ -75,9 +80,9 @@ namespace GameEngine.Editor
                 float dt = (float)timer.Elapsed.TotalSeconds;
                 timer.Restart();
 
-                game.Update(dt);
+                editorState.engineHost.Update(dt);
                 camera.Update(inputHandler, dt);
-                game.Render(camera);
+                editorState.engineHost.Render(camera);
                 sceneView.glControl.SwapBuffers();
             }
         }
@@ -85,7 +90,8 @@ namespace GameEngine.Editor
         private void glControl_Load(object? sender, EventArgs e)
         {
             sceneView.glControl.MakeCurrent();
-            game.Initialize();
+            sceneView.glControl.Context.SwapInterval = 1;
+            editorState.engineHost.InitializeGL();
         }
 
         private void glControl_Paint(object? sender, PaintEventArgs e)
@@ -95,9 +101,9 @@ namespace GameEngine.Editor
             float dt = (float)timer.Elapsed.TotalSeconds;
             timer.Restart();
 
-            game.Update(dt);
+            editorState.engineHost.Update(dt);
             camera.Update(inputHandler, dt);
-            game.Render(camera);
+            editorState.engineHost.Render(camera);
 
             sceneView.glControl.SwapBuffers();
         }
@@ -136,28 +142,58 @@ namespace GameEngine.Editor
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var dialog = new SaveFileDialog();
-            dialog.Filter = "Scene Files (*.scene)|*.scene";
-            if (dialog.ShowDialog() == DialogResult.OK)
-                SceneSerializer.SaveScene(game.gameObjectManager, game.scene, dialog.FileName);
+            if (!ProjectContext.HasProject)
+            {
+                var created = ProjectDialogs.CreateProjectWithDialog(this);
+                if (created == null)
+                    return;
+            }
+
+            string? relPath = string.IsNullOrWhiteSpace(editorState.engineHost.game.scene.relPath)
+                ? ProjectContext.Current?.StartSceneRelative
+                : editorState.engineHost.game.scene.relPath;
+
+            if (string.IsNullOrWhiteSpace(relPath))
+            {
+                MessageBox.Show(
+                    this,
+                    "No scene path is set. Set a start scene in project settings before saving.",
+                    "Save Scene",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            SceneSerializer.SaveScene
+            (
+                editorState.engineHost.game.gameObjectManager,
+                editorState.engineHost.game.scene,
+                relPath,
+                true
+            );
+
+            editorState.engineHost.game.scene.relPath = relPath;
         }
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var dialog = new OpenFileDialog();
-            dialog.Filter = "Scene Files (*.scene)|*.scene";
-            if (dialog.ShowDialog() == DialogResult.OK)
-            {
-                SceneSerializer.LoadScene(game.gameObjectManager, game.scene, dialog.FileName);
-                objectHierarchy.RefreshList();
-                sceneView.Refresh();
-            }
+            var project = ProjectDialogs.OpenProjectWithDialog(editorState, this);
+            if (project != null)
+                materialEditor?.RefreshMaterialListFromEditor();
         }
 
         private void sceneSettingsButton_Click(object sender, EventArgs e)
         {
-            SceneSettings sceneSettings = new(game.scene);
+            SceneSettings sceneSettings = new(editorState.engineHost.game.scene);
             sceneSettings.Show();
+        }
+
+        private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var project = ProjectDialogs.CreateProjectWithDialog(this);
+            if (project != null)
+                materialEditor?.RefreshMaterialListFromEditor();
         }
     }
 }
