@@ -1,4 +1,5 @@
 using OpenTK.Mathematics;
+using System.Drawing;
 
 namespace GameEngine.Editor
 {
@@ -10,6 +11,7 @@ namespace GameEngine.Editor
             { typeof(float), () => new FloatRenderer() },
             { typeof(int), () => new IntRenderer() },
             { typeof(string), () => new StringRenderer() },
+            { typeof(Color), () => new ColorRenderer() },
             { typeof(MaterialReference), () => new MaterialRenderer() },
         };
 

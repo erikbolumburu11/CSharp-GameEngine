@@ -1,4 +1,7 @@
 using GameEngine.Engine.Components;
+using OpenTK.Mathematics;
+using System;
+using System.Drawing;
 
 namespace GameEngine.Editor
 {
@@ -37,6 +40,27 @@ namespace GameEngine.Editor
                 getValue = () => target.specularStrength,
                 setValue = value => target.specularStrength = (float)value
             });
+
+            fields.Add(new FieldDescriptor
+            {
+                label = "Color",
+                valueType = typeof(Color),
+                getValue = () => VectorToColor(target.color),
+                setValue = value => target.color = ColorToVector((Color)value)
+            });
+        }
+
+        private static Color VectorToColor(Vector3 color)
+        {
+            int r = (int)Math.Clamp(color.X, 0f, 255f);
+            int g = (int)Math.Clamp(color.Y, 0f, 255f);
+            int b = (int)Math.Clamp(color.Z, 0f, 255f);
+            return Color.FromArgb(255, r, g, b);
+        }
+
+        private static Vector3 ColorToVector(Color color)
+        {
+            return new Vector3(color.R, color.G, color.B);
         }
     }
 }

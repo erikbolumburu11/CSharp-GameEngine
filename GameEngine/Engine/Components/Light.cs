@@ -70,7 +70,7 @@ namespace GameEngine.Engine.Components
             return new LightData
             {
                 positionIntensity = new Vector4(gameObject.transform.position, intensity / 100f),
-                colorRadius       = new Vector4(color, packedRadius),
+                colorRadius       = new Vector4(color / 255f, packedRadius),
                 directionType     = new Vector4(dir, (float)type),
                 specularPadding   = new Vector4(specularStrength, 0f, 0f, 0f)
             };

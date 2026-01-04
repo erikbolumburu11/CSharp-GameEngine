@@ -2,10 +2,10 @@
 
 struct Light
 {
-    vec4 positionIntensity;
-    vec4 colorRadius;
-    vec4 directionType;
-    vec4 specularPadding;
+    vec4 positionIntensity;   // xyz = position (point), w = intensity
+    vec4 colorRadius;         // xyz = light color, w = radius (point)
+    vec4 directionType;       // xyz = direction (dir), w = type (0 point, 1 dir)
+    vec4 specularPadding;     // x = specularStrength
 };
 
 // SSBO: array of lights
@@ -18,10 +18,10 @@ uniform sampler2D diffuseTexture;
 uniform sampler2D specularTexture;
 
 uniform float ambientIntensity;
-uniform int lightCount;    
+uniform int lightCount;
 uniform vec3 viewPos;
 
-in vec3 fragPos;           
+in vec3 fragPos;
 in vec2 texCoord;
 in vec3 normal;
 
@@ -29,56 +29,65 @@ out vec4 FragColor;
 
 void main()
 {
-    vec3 diffTexColor = texture(diffuseTexture, texCoord).rgb;
-    vec3 specTexColor = texture(specularTexture, texCoord).rgb;
+    vec3 albedo = texture(diffuseTexture, texCoord).rgb;
+    float specMask = texture(specularTexture, texCoord).r;
 
-    vec3 lighting = vec3(0.0);
+    vec3 N = normalize(normal);
+    vec3 V = normalize(viewPos - fragPos);
+
+    vec3 diffuseSum = vec3(0.0);
+    vec3 specSum    = vec3(0.0);
 
     for (int i = 0; i < lightCount; i++)
     {
-        vec3 norm = normalize(normal);
-
         int type = int(lights[i].directionType.w + 0.5);
 
-        vec3 lightDir;
+        vec3 L;
         float attenuation = 1.0;
 
         if (type == 0) // POINT
         {
             vec3 toLight = lights[i].positionIntensity.xyz - fragPos;
-            float distance = length(toLight);
+            float dist = length(toLight);
 
-            if (distance > lights[i].colorRadius.w)
-                continue;
+            float radius = lights[i].colorRadius.w;
+            if (dist > radius) continue;
 
-            lightDir = normalize(toLight);
+            L = toLight / max(dist, 1e-6);
 
-            attenuation = 1.0 - (distance / lights[i].colorRadius.w);
+            attenuation = 1.0 - (dist / max(radius, 1e-6));
             attenuation = clamp(attenuation, 0.0, 1.0);
             attenuation *= attenuation;
         }
         else // DIRECTIONAL
         {
-            lightDir = normalize(-lights[i].directionType.xyz);
+            // directionType.xyz = direction the light points (from light toward scene)
+            // Use -dir as "from fragment to light"
+            L = normalize(-lights[i].directionType.xyz);
             attenuation = 1.0;
         }
 
-        float diff = max(dot(norm, lightDir), 0.0);
-
-        vec3 viewDir = normalize(viewPos - fragPos);
-        vec3 reflectDir = reflect(-lightDir, norm);
-
-        float specMask = specTexColor.r;
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+        float NdotL = max(dot(N, L), 0.0);
+        if (NdotL <= 0.0) continue;
 
         vec3 lightColor = lights[i].colorRadius.rgb;
+        float intensity = lights[i].positionIntensity.w;
 
-        vec3 specular = lights[i].specularPadding.x * spec * specMask * lightColor;
+        vec3 radiance = lightColor * intensity * attenuation;
 
-        lighting += lightColor * diff * lights[i].positionIntensity.w * attenuation
-                + specular * attenuation;
+        // Diffuse: albedo tinted by light
+        diffuseSum += albedo * radiance * NdotL;
+
+        // Specular: NOT multiplied by albedo (keeps highlights clean)
+        vec3 H = normalize(V + L); // Blinn-Phong
+        float spec = pow(max(dot(N, H), 0.0), 32.0);
+
+        float specStrength = lights[i].specularPadding.x;
+        specSum += radiance * (specStrength * specMask) * spec;
     }
 
-    FragColor = vec4(diffTexColor * (lighting + vec3(ambientIntensity)), 1.0);
-}
+    // Ambient should usually be tinted by albedo
+    vec3 ambient = albedo * ambientIntensity;
 
+    FragColor = vec4(ambient + diffuseSum + specSum, 1.0);
+}

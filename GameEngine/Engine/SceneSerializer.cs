@@ -54,7 +54,12 @@ namespace GameEngine.Engine {
                 var go = gameObjectManager.CreateGameObject(goDto.Name);
 
                 go.transform.position = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
-                go.transform.rotation = new Quaternion(goDto.Transform.RotationX, goDto.Transform.RotationY, goDto.Transform.RotationZ);
+                go.transform.rotation = new Quaternion(
+                    goDto.Transform.RotationX,
+                    goDto.Transform.RotationY,
+                    goDto.Transform.RotationZ,
+                    goDto.Transform.RotationW
+                );
                 go.transform.scale    = new Vector3(goDto.Transform.ScaleX, goDto.Transform.ScaleY, goDto.Transform.ScaleZ);
 
                 DeserializeComponents(go, goDto.Components);
@@ -79,6 +84,7 @@ namespace GameEngine.Engine {
                     RotationX = gameObject.transform.rotation.X,
                     RotationY = gameObject.transform.rotation.Y,
                     RotationZ = gameObject.transform.rotation.Z,
+                    RotationW = gameObject.transform.rotation.W,
 
                     ScaleX = gameObject.transform.scale.X,
                     ScaleY = gameObject.transform.scale.Y,
@@ -161,6 +167,7 @@ namespace GameEngine.Engine {
         public float RotationX { get; set; }
         public float RotationY { get; set; }
         public float RotationZ { get; set; }
+        public float RotationW { get; set; }
 
         public float ScaleX { get; set; } = 1f;
         public float ScaleY { get; set; } = 1f;
