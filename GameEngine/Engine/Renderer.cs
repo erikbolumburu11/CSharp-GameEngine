@@ -43,9 +43,13 @@ namespace GameEngine.Engine
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
+                Material material = materialManager.Get(meshRenderer.material);
 
-                Texture texture = textureManager.Get(materialManager.Get(meshRenderer.material).diffuseTex);
-                texture.Use(TextureUnit.Texture0);
+                material.GetDiffuse(textureManager).Use(TextureUnit.Texture0);
+                shader.SetInt("diffuseTexture", 0);
+
+                material.GetSpecular(textureManager).Use(TextureUnit.Texture1);
+                shader.SetInt("specularTexture", 1);
 
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, 36);

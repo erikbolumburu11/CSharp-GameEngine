@@ -15,7 +15,8 @@ layout(std430, binding = 0) buffer LightBuffer
     Light lights[];
 };
 
-uniform sampler2D texture0;
+uniform sampler2D diffuseTexture;
+uniform sampler2D specularTexture;
 
 uniform float ambientIntensity;
 uniform int lightCount;    
@@ -29,7 +30,8 @@ out vec4 FragColor;
 
 void main()
 {
-    vec3 texColor = texture(texture0, texCoord).rgb;
+    vec3 diffTexColor = texture(diffuseTexture, texCoord).rgb;
+    vec3 specTexColor = texture(specularTexture, texCoord).rgb;
 
     vec3 lighting = vec3(0.0);
 
@@ -54,12 +56,13 @@ void main()
         vec3 viewDir = normalize(viewPos - fragPos);
         vec3 reflectDir = reflect(-lightDir, norm);
 
+        float specMask = specTexColor.r;
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        vec3 specular = lights[i].specularStrength * spec * lights[i].color;
+        vec3 specular = lights[i].specularStrength * spec * specMask * lights[i].color;
 
         lighting += lights[i].color * diff * lights[i].intensity * attenuation + specular * attenuation;
     }
 
-    FragColor = vec4(texColor * (lighting + vec3(ambientIntensity)), 1.0);
+    FragColor = vec4(diffTexColor * (lighting + vec3(ambientIntensity)), 1.0);
 }
 

@@ -23,6 +23,7 @@ namespace GameEngine.Editor
                 ColumnCount = 1,
                 RowCount = 3,
             };
+
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));

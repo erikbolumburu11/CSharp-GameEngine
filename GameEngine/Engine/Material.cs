@@ -5,21 +5,35 @@ namespace GameEngine.Engine
     public record MaterialDto
     (
         string diffuseTex
+        string specularTex
     );
 
     public class Material
     {
         public string relPath;
         public string? diffuseTex;
+        public string? specularTex;
+
+        public Texture GetDiffuse(TextureManager textureManager)
+        {
+            return textureManager.Get(diffuseTex) ?? textureManager.White;
+        }
+
+        public Texture GetSpecular(TextureManager textureManager)
+        {
+            return textureManager.Get(specularTex) ?? textureManager.Grey;
+        }
 
         public MaterialDto ToDto() => new
         (
-            diffuseTex: diffuseTex
+            diffuseTex: diffuseTex,
+            specularTex: specularTex
         );
 
         public void FromDto(MaterialDto dto)
         {
             diffuseTex = dto.diffuseTex;
+            specularTex = dto.specularTex;
         }
     }
 

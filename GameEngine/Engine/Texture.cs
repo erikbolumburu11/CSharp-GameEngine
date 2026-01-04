@@ -5,7 +5,7 @@ namespace GameEngine.Engine
 {
     public class Texture : IDisposable
     {
-        public int handle;
+        private readonly int handle;
         public int Width { get; private set; }
         public int Height { get; private set; }
 

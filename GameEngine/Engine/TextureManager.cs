@@ -8,6 +8,7 @@ namespace GameEngine.Engine
         readonly Dictionary<string, Texture> textures;
 
         public Texture White { get; private set; }
+        public Texture Grey { get; private set; }
         public Texture Black { get; private set; }
         public Texture FlatNormal { get; private set; }
 
@@ -19,6 +20,7 @@ namespace GameEngine.Engine
         public void InitializeDefaultTextures()
         {
             White = Create1x1(255, 255, 255, 255);
+            Grey = Create1x1(127, 127, 127, 255);
             Black = Create1x1(0, 0, 0, 255);
             FlatNormal = Create1x1(128, 128, 255, 255);
         }
