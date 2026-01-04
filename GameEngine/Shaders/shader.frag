@@ -2,11 +2,9 @@
 
 struct Light
 {
-    vec3 position;
-    float intensity;
-    vec3 color;
-    float radius;
-    float specularStrength;
+    vec4 positionIntensity;
+    vec4 colorRadius;
+    vec4 specularPadding;
 };
 
 // SSBO: array of lights
@@ -39,17 +37,17 @@ void main()
     {
         vec3 norm = normalize(normal);
 
-        vec3 lightDir = lights[i].position - fragPos;
+        vec3 lightDir = lights[i].positionIntensity.xyz - fragPos;
         float distance = length(lightDir);
 
-        if (distance > lights[i].radius)
+        if (distance > lights[i].colorRadius.w)
             continue;
 
         lightDir = normalize(lightDir);
 
         float diff = max(dot(norm, lightDir), 0.0);
 
-        float attenuation = 1.0 - (distance / lights[i].radius);
+        float attenuation = 1.0 - (distance / lights[i].colorRadius.w);
         attenuation = clamp(attenuation, 0.0, 1.0);
         attenuation *= attenuation; // smoother falloff
 
@@ -58,9 +56,9 @@ void main()
 
         float specMask = specTexColor.r;
         float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-        vec3 specular = lights[i].specularStrength * spec * specMask * lights[i].color;
+        vec3 specular = lights[i].specularPadding.x * spec * specMask * lights[i].colorRadius.rgb;
 
-        lighting += lights[i].color * diff * lights[i].intensity * attenuation + specular * attenuation;
+        lighting += lights[i].colorRadius.rgb * diff * lights[i].positionIntensity.w * attenuation + specular * attenuation;
     }
 
     FragColor = vec4(diffTexColor * (lighting + vec3(ambientIntensity)), 1.0);

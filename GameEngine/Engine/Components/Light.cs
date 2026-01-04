@@ -6,11 +6,9 @@ namespace GameEngine.Engine.Components
     [StructLayout(LayoutKind.Sequential)]
     public struct LightData
     {
-        public Vector3 position;
-        public float intensity;
-        public Vector3 color;
-        public float radius;
-        public float specularStrength;
+        public Vector4 positionIntensity;
+        public Vector4 colorRadius;
+        public Vector4 specularPadding;
     }
 
     public record LightDto
@@ -49,11 +47,9 @@ namespace GameEngine.Engine.Components
         {
             return new LightData
             {
-                position = gameObject.transform.position,
-                intensity = intensity / 100,
-                color = color,
-                radius = radius,
-                specularStrength = specularStrength
+                positionIntensity = new Vector4(gameObject.transform.position, intensity / 100),
+                colorRadius = new Vector4(color, radius),
+                specularPadding = new Vector4(specularStrength, 0f, 0f, 0f)
             };
         }
     }
