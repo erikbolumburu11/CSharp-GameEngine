@@ -4,7 +4,7 @@ namespace GameEngine.Engine
 {
     public record MaterialDto
     (
-        string diffuseTex
+        string diffuseTex,
         string specularTex
     );
 
@@ -16,11 +16,35 @@ namespace GameEngine.Engine
 
         public Texture GetDiffuse(TextureManager textureManager)
         {
+            if (string.IsNullOrWhiteSpace(diffuseTex) || ProjectContext.Current == null)
+                return textureManager.White;
+
+            string absPath = ProjectContext.Current.Paths.ToAbsolute(diffuseTex);
+            if (!File.Exists(absPath))
+            {
+                diffuseTex = null;
+                if (!string.IsNullOrWhiteSpace(relPath))
+                    MaterialSerializer.SaveMaterial(this, relPath);
+                return textureManager.White;
+            }
+
             return textureManager.Get(diffuseTex) ?? textureManager.White;
         }
 
         public Texture GetSpecular(TextureManager textureManager)
         {
+            if (string.IsNullOrWhiteSpace(specularTex) || ProjectContext.Current == null)
+                return textureManager.Grey;
+
+            string absPath = ProjectContext.Current.Paths.ToAbsolute(specularTex);
+            if (!File.Exists(absPath))
+            {
+                specularTex = null;
+                if (!string.IsNullOrWhiteSpace(relPath))
+                    MaterialSerializer.SaveMaterial(this, relPath);
+                return textureManager.Grey;
+            }
+
             return textureManager.Get(specularTex) ?? textureManager.Grey;
         }
 

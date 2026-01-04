@@ -11,10 +11,21 @@ namespace GameEngine.Editor
         private ComboBox materialComboBox;
         private Button newMaterialButton;
         private Button deleteMaterialButton;
-        private TextBox diffuseTextureTextBox;
+        private ComboBox diffuseTextureComboBox;
+        private ComboBox specularTextureComboBox;
         private Button diffuseTextureBrowseButton;
+        private Button specularTextureBrowseButton;
         private Material? currentMaterial;
         private string? currentMaterialPath;
+        private const string NoTextureLabel = "(None)";
+        private static readonly HashSet<string> TextureExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".tga",
+            ".bmp"
+        };
 
         public MaterialEditor(EditorState editorState)
         {
@@ -49,6 +60,7 @@ namespace GameEngine.Editor
             AddSection(BuildMaterialSelector());
             AddSection(BuildMaterialActions());
             AddSection(BuildDiffuseTextureEditor());
+            AddSection(BuildSpecularTextureEditor());
             AddSeparator();
         }
 
@@ -139,6 +151,33 @@ namespace GameEngine.Editor
 
         private Control BuildDiffuseTextureEditor()
         {
+            return BuildTextureComboEditor(
+                "Diffuse Texture",
+                out diffuseTextureComboBox,
+                out diffuseTextureBrowseButton,
+                OnDiffuseTextureSelectionChanged,
+                OnDiffuseTextureBrowseClicked
+            );
+        }
+
+        private Control BuildSpecularTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Specular Texture",
+                out specularTextureComboBox,
+                out specularTextureBrowseButton,
+                OnSpecularTextureSelectionChanged,
+                OnSpecularTextureBrowseClicked
+            );
+        }
+
+        private Control BuildTextureComboEditor(
+            string header,
+            out ComboBox comboBox,
+            out Button browseButton,
+            EventHandler selectionChanged,
+            EventHandler browseClicked)
+        {
             var section = new Panel
             {
                 AutoSize = true,
@@ -150,12 +189,14 @@ namespace GameEngine.Editor
 
             var headerLabel = new Label
             {
-                Text = "Diffuse Texture",
+                Text = header,
                 Font = new Font(Font, FontStyle.Bold),
                 AutoSize = true,
                 Margin = new Padding(0, 4, 0, 2),
                 Dock = DockStyle.Top
             };
+            section.Controls.Add(headerLabel);
+
             var row = new TableLayoutPanel
             {
                 ColumnCount = 2,
@@ -168,28 +209,32 @@ namespace GameEngine.Editor
             row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
             row.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            diffuseTextureTextBox = new TextBox
+            var localComboBox = new ComboBox
             {
                 Dock = DockStyle.Fill,
-                ReadOnly = true,
+                DropDownStyle = ComboBoxStyle.DropDownList,
                 Margin = new Padding(0, 0, 4, 0)
             };
+            localComboBox.SelectedIndexChanged += selectionChanged;
+            row.Controls.Add(localComboBox, 0, 0);
 
-            diffuseTextureBrowseButton = new Button
+            var localBrowseButton = new Button
             {
                 Text = "Browse...",
                 Dock = DockStyle.Fill,
                 Margin = new Padding(4, 0, 0, 0)
             };
-            diffuseTextureBrowseButton.Click += OnDiffuseTextureBrowseClicked;
-
-            row.Controls.Add(diffuseTextureTextBox, 0, 0);
-            row.Controls.Add(diffuseTextureBrowseButton, 1, 0);
+            localBrowseButton.Click += browseClicked;
+            row.Controls.Add(localBrowseButton, 1, 0);
 
             section.Controls.Add(row);
-            section.Controls.Add(headerLabel);
+            section.Controls.SetChildIndex(row, 0);
+
             section.Resize += (s, e) => row.Width = section.ClientSize.Width;
             row.Width = section.ClientSize.Width;
+
+            comboBox = localComboBox;
+            browseButton = localBrowseButton;
 
             return section;
         }
@@ -274,76 +319,63 @@ namespace GameEngine.Editor
             {
                 currentMaterial = null;
                 currentMaterialPath = null;
-                diffuseTextureTextBox.Text = string.Empty;
+                RefreshTextureLists();
+                SetTextureSelection(diffuseTextureComboBox, null);
+                SetTextureSelection(specularTextureComboBox, null);
                 return;
             }
 
             currentMaterialPath = relPath;
             currentMaterial = editorState.engineHost.materialManager.Get(relPath);
-            diffuseTextureTextBox.Text = currentMaterial.diffuseTex ?? string.Empty;
+            RefreshTextureLists();
+            SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTex);
+            SetTextureSelection(specularTextureComboBox, currentMaterial.specularTex);
+        }
+
+        private void OnDiffuseTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.diffuseTex = GetSelectedTexture(diffuseTextureComboBox);
+            MaterialSerializer.SaveMaterial(material, path);
         }
 
         private void OnDiffuseTextureBrowseClicked(object? sender, EventArgs e)
         {
-            if (!ProjectContext.HasProject || ProjectContext.Current == null)
-            {
-                MessageBox.Show(
-                    this,
-                    "Open or create a project before editing materials.",
-                    "No Project",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
-                return;
-            }
-
-            if (currentMaterial == null || string.IsNullOrWhiteSpace(currentMaterialPath))
-            {
-                MessageBox.Show(
-                    this,
-                    "Select a material first.",
-                    "No Material Selected",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
-                return;
-            }
-
-            string texturesDir = Path.Combine(ProjectContext.Current.Paths.AssetRootAbsolute, "Textures");
-            Directory.CreateDirectory(texturesDir);
-
-            using var ofd = new OpenFileDialog
-            {
-                Title = "Select Diffuse Texture",
-                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.tga;*.bmp)|*.png;*.jpg;*.jpeg;*.tga;*.bmp|All files (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false,
-                InitialDirectory = texturesDir
-            };
-
-            if (ofd.ShowDialog(this) != DialogResult.OK)
+            if (!TryGetCurrentMaterial(out var material, out var path))
                 return;
 
-            string relPath;
-            try
-            {
-                relPath = ProjectContext.Current.Paths.ToProjectRelative(ofd.FileName);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    this,
-                    ex.Message,
-                    "Invalid Texture Path",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
+            string? relPath = BrowseForTexture("Select Diffuse Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
                 return;
-            }
 
-            currentMaterial.diffuseTex = relPath;
-            MaterialSerializer.SaveMaterial(currentMaterial, currentMaterialPath);
-            diffuseTextureTextBox.Text = relPath;
+            material.diffuseTex = relPath;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(diffuseTextureComboBox, relPath);
+        }
+
+        private void OnSpecularTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.specularTex = GetSelectedTexture(specularTextureComboBox);
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void OnSpecularTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Specular Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            material.specularTex = relPath;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(specularTextureComboBox, relPath);
         }
 
         public void RefreshMaterialListFromEditor()
@@ -356,7 +388,10 @@ namespace GameEngine.Editor
             materialComboBox.Items.Clear();
 
             if (!ProjectContext.HasProject || ProjectContext.Current == null)
+            {
+                RefreshTextureLists();
                 return;
+            }
 
             string rootPath = ProjectContext.Current.RootPath;
             var materialPaths = Directory.EnumerateFiles(rootPath, "*.mat", SearchOption.AllDirectories)
@@ -377,6 +412,160 @@ namespace GameEngine.Editor
 
             foreach (var path in materialPaths)
                 materialComboBox.Items.Add(path);
+
+            RefreshTextureLists();
+        }
+
+        private void RefreshTextureLists()
+        {
+            if (diffuseTextureComboBox == null || specularTextureComboBox == null)
+                return;
+
+            RefreshTextureCombo(diffuseTextureComboBox);
+            RefreshTextureCombo(specularTextureComboBox);
+
+            if (currentMaterial != null)
+            {
+                SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTex);
+                SetTextureSelection(specularTextureComboBox, currentMaterial.specularTex);
+            }
+        }
+
+        private void RefreshTextureCombo(ComboBox combo)
+        {
+            combo.Items.Clear();
+            combo.Items.Add(NoTextureLabel);
+
+            foreach (var path in EnumerateTexturePaths())
+                combo.Items.Add(path);
+        }
+
+        private IEnumerable<string> EnumerateTexturePaths()
+        {
+            if (ProjectContext.Current == null)
+                yield break;
+
+            string texturesDir = Path.Combine(ProjectContext.Current.Paths.AssetRootAbsolute, "Textures");
+            if (!Directory.Exists(texturesDir))
+                yield break;
+
+            var textures = Directory.EnumerateFiles(texturesDir, "*.*", SearchOption.AllDirectories)
+                .Where(path => TextureExtensions.Contains(Path.GetExtension(path)))
+                .Select(path =>
+                {
+                    try
+                    {
+                        return ProjectContext.Current.Paths.ToProjectRelative(path);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                })
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var path in textures)
+                yield return path!;
+        }
+
+        private string? BrowseForTexture(string title)
+        {
+            if (ProjectContext.Current == null)
+                return null;
+
+            string texturesDir = Path.Combine(ProjectContext.Current.Paths.AssetRootAbsolute, "Textures");
+            Directory.CreateDirectory(texturesDir);
+
+            using var ofd = new OpenFileDialog
+            {
+                Title = title,
+                Filter = "Image Files (*.png;*.jpg;*.jpeg;*.tga;*.bmp)|*.png;*.jpg;*.jpeg;*.tga;*.bmp|All files (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false,
+                InitialDirectory = texturesDir
+            };
+
+            if (ofd.ShowDialog(this) != DialogResult.OK)
+                return null;
+
+            try
+            {
+                return ProjectContext.Current.Paths.ToProjectRelative(ofd.FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    ex.Message,
+                    "Invalid Texture Path",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return null;
+            }
+        }
+
+        private void SetTextureSelection(ComboBox combo, string? relPath)
+        {
+            string selection = string.IsNullOrWhiteSpace(relPath) ? NoTextureLabel : relPath;
+            int index = combo.Items.IndexOf(selection);
+            if (index >= 0)
+            {
+                combo.SelectedIndex = index;
+                return;
+            }
+
+            combo.Items.Add(selection);
+            combo.SelectedItem = selection;
+        }
+
+        private string? GetSelectedTexture(ComboBox combo)
+        {
+            if (combo.SelectedItem is string selected)
+            {
+                if (string.Equals(selected, NoTextureLabel, StringComparison.Ordinal))
+                    return null;
+                return selected;
+            }
+
+            return null;
+        }
+
+        private bool TryGetCurrentMaterial(out Material material, out string relPath)
+        {
+            if (!ProjectContext.HasProject || ProjectContext.Current == null)
+            {
+                MessageBox.Show(
+                    this,
+                    "Open or create a project before editing materials.",
+                    "No Project",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                material = null!;
+                relPath = string.Empty;
+                return false;
+            }
+
+            if (currentMaterial == null || string.IsNullOrWhiteSpace(currentMaterialPath))
+            {
+                MessageBox.Show(
+                    this,
+                    "Select a material first.",
+                    "No Material Selected",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+                material = null!;
+                relPath = string.Empty;
+                return false;
+            }
+
+            material = currentMaterial;
+            relPath = currentMaterialPath;
+            return true;
         }
     }
 }
