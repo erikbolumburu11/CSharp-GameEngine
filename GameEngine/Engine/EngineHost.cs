@@ -31,7 +31,6 @@ namespace GameEngine.Engine
             Console.WriteLine("GL Version: " + GL.GetString(StringName.Version));
             Console.WriteLine("GLSL Version: " + GL.GetString(StringName.ShadingLanguageVersion));
 
-
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Multisample);
 
@@ -49,7 +48,14 @@ namespace GameEngine.Engine
             GL.ClearColor(game.scene.skyboxColor);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            renderer.Render(textureManager, game.gameObjectManager, lightManager, game.scene, camera);
+            renderer.Render(
+                materialManager, 
+                textureManager,
+                game.gameObjectManager,
+                lightManager,
+                game.scene,
+                camera
+            );
         }
 
         public void Update(float deltaTime)

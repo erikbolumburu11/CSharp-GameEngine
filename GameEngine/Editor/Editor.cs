@@ -44,7 +44,7 @@ namespace GameEngine.Editor
             inspector = new Inspector(editorState, editorState.engineHost.game.gameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
 
-            materialEditor = new MaterialEditor();
+            materialEditor = new MaterialEditor(editorState);
             materialEditor.Show(dockPanel, DockState.DockRight);
 
             inspector.Activate();
@@ -178,7 +178,9 @@ namespace GameEngine.Editor
 
         private void loadToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ProjectDialogs.OpenProjectWithDialog(editorState, this);
+            var project = ProjectDialogs.OpenProjectWithDialog(editorState, this);
+            if (project != null)
+                materialEditor?.RefreshMaterialListFromEditor();
         }
 
         private void sceneSettingsButton_Click(object sender, EventArgs e)
@@ -189,7 +191,9 @@ namespace GameEngine.Editor
 
         private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ProjectDialogs.CreateProjectWithDialog(this);
+            var project = ProjectDialogs.CreateProjectWithDialog(this);
+            if (project != null)
+                materialEditor?.RefreshMaterialListFromEditor();
         }
     }
 }

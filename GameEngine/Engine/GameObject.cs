@@ -97,6 +97,7 @@ namespace GameEngine.Engine
         public void SetName(string name)
         {
             this.name = name;
+            Changed?.Invoke(this);
         }
 
         public void SetPosition(Vector3 position)

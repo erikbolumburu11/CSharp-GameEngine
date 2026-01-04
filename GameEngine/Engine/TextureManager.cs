@@ -5,11 +5,16 @@ namespace GameEngine.Engine
 {
     public class TextureManager : IDisposable
     {
-        Dictionary<string, Texture> textures;
+        readonly Dictionary<string, Texture> textures;
 
         public Texture White { get; private set; }
         public Texture Black { get; private set; }
         public Texture FlatNormal { get; private set; }
+
+        public TextureManager()
+        {
+            textures = new Dictionary<string, Texture>(StringComparer.OrdinalIgnoreCase);
+        }
 
         public void InitializeDefaultTextures()
         {
@@ -23,11 +28,12 @@ namespace GameEngine.Engine
             throw new NotImplementedException();
         }
 
-        public Texture Get(string path)
+        public Texture Get(string? path)
         {
-            if(path == null) return White;
+            if (string.IsNullOrWhiteSpace(path)) return White;
+            if (ProjectContext.Current == null) return White;
 
-            path = Path.GetFullPath(path);
+            path = Path.GetFullPath(Path.Combine(ProjectContext.Current.RootPath, path));
 
             if (textures.TryGetValue(path, out var tex))
                 return tex;

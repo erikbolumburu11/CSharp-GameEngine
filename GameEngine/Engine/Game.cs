@@ -20,6 +20,5 @@ namespace GameEngine.Engine
 
             scene = new Scene();
         }
-
     }
 }

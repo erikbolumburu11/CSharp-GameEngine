@@ -83,7 +83,15 @@ namespace GameEngine.Editor
 
             addComponentButton.Click += (s, e) =>
             {
-                cms.Show();
+                var menuSize = cms.GetPreferredSize(Size.Empty);
+                var screen = Screen.FromControl(addComponentButton).WorkingArea;
+                var buttonScreen = addComponentButton.PointToScreen(Point.Empty);
+
+                var below = new Point(buttonScreen.X, buttonScreen.Y + addComponentButton.Height);
+                var above = new Point(buttonScreen.X, buttonScreen.Y - menuSize.Height);
+                var openBelow = below.Y + menuSize.Height <= screen.Bottom;
+
+                cms.Show(openBelow ? below : above);
             };
 
             return addComponentButton;
@@ -122,6 +130,11 @@ namespace GameEngine.Editor
                 {
                     AddSeparator();
                     AddSection(CreateEditorSection(comp.name, new LightEditor(light)));
+                }
+                else if (comp is MeshRenderer meshRenderer)
+                {
+                    AddSeparator();
+                    AddSection(CreateEditorSection(comp.name, new MeshRendererEditor(meshRenderer, editorState)));
                 }
             }
 

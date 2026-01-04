@@ -10,6 +10,7 @@ namespace GameEngine.Editor
             { typeof(float), () => new FloatRenderer() },
             { typeof(int), () => new IntRenderer() },
             { typeof(string), () => new StringRenderer() },
+            { typeof(MaterialReference), () => new MaterialRenderer() },
         };
 
         public static Control Bind(FieldDescriptor fieldDescriptor, Control parent)

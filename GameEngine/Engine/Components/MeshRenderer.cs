@@ -4,6 +4,7 @@ namespace GameEngine.Engine.Components
 {
     public record MeshRendererDto
     (
+        string material
     );
 
     public class MeshRenderer : Component
@@ -11,9 +12,8 @@ namespace GameEngine.Engine.Components
         public VertexArray vao { get; private set; }
         public VertexBuffer<float> vbo { get; private set; }
 
-        public Material material;
+        public string? material;
         public Shader shader;
-        public string texturePath;
 
         public override void Start()
         {
@@ -78,12 +78,12 @@ namespace GameEngine.Engine.Components
 
         public MeshRendererDto ToDto() => new
         (
+            material: material
         );
 
         public void FromDto(MeshRendererDto dto)
         {
+            material = dto.material;
         }
-
-        public void SetTexture(string path) => texturePath = path;
     }
 }

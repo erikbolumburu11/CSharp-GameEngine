@@ -85,7 +85,8 @@ namespace GameEngine.Editor
             int index = listBox.Items.IndexOf(obj);
             if (index >= 0)
             {
-                listBox.Items[index] = listBox.Items[index];
+                listBox.Items[index] = obj;
+                listBox.Refresh();
             }
         }
 

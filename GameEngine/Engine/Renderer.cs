@@ -11,6 +11,7 @@ namespace GameEngine.Engine
 
         public void Render
         (
+            MaterialManager materialManager,
             TextureManager textureManager,
             GameObjectManager gameObjectManager,
             LightManager lightManager,
@@ -42,7 +43,8 @@ namespace GameEngine.Engine
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
-                Texture texture = textureManager.Get(meshRenderer.texturePath);
+
+                Texture texture = textureManager.Get(materialManager.Get(meshRenderer.material).diffuseTex);
                 texture.Use(TextureUnit.Texture0);
 
                 meshRenderer.vao.Bind();
