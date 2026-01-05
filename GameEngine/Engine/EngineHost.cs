@@ -9,6 +9,7 @@ namespace GameEngine.Engine
         Renderer renderer;
         public LightManager lightManager { get; private set; }
         public TextureManager textureManager { get; private set; }
+        public ShaderManager shaderManager { get; private set; }
         public MaterialManager materialManager { get; private set; }
 
         public Game game;
@@ -22,6 +23,8 @@ namespace GameEngine.Engine
             game = new Game();
 
             textureManager = new TextureManager();
+            shaderManager = new ShaderManager();
+            ShaderManager.SetCurrent(shaderManager);
             materialManager = new MaterialManager();
             renderer = new Renderer();
         }
@@ -35,8 +38,11 @@ namespace GameEngine.Engine
             GL.Enable(EnableCap.Multisample);
 
             textureManager.InitializeDefaultTextures();
+            shaderManager.InitializeDefaultShaders();
             materialManager.InitializeDefaultMaterials();
             lightManager = new();
+
+            renderer.shadowMap = new ShadowMap(2048);
 
             glInitialized = true;
         }
@@ -49,6 +55,7 @@ namespace GameEngine.Engine
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderer.Render(
+                shaderManager,
                 materialManager, 
                 textureManager,
                 game.gameObjectManager,

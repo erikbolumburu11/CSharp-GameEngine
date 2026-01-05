@@ -1,4 +1,6 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using System;
+using System.Collections.Generic;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
 namespace GameEngine.Engine
@@ -9,50 +11,17 @@ namespace GameEngine.Engine
 
         Dictionary<string, int> uniformLocations;
 
-        public Shader(string vertexPath, string fragmentPath)
+        public Shader(string vertexSource, string fragmentSource)
         {
-            int VertexShader;
-            int FragmentShader;
-
-            string VertexShaderSource = File.ReadAllText(vertexPath);
-            string FragmentShaderSource = File.ReadAllText(fragmentPath);
-
-            VertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(VertexShader, VertexShaderSource);
-
-            FragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(FragmentShader, FragmentShaderSource);
-
-            // Compile Vertex Shader
-            {
-                GL.CompileShader(VertexShader);
-
-                GL.GetShader(VertexShader, ShaderParameter.CompileStatus, out int success);
-                if (success == 0)
-                {
-                    string infoLog = GL.GetShaderInfoLog(VertexShader);
-                    Console.WriteLine(infoLog);
-                }
-            }
-
-            // Compile Fragment Shader
-            {
-                GL.CompileShader(FragmentShader);
-
-                GL.GetShader(FragmentShader, ShaderParameter.CompileStatus, out int success);
-                if (success == 0)
-                {
-                    string infoLog = GL.GetShaderInfoLog(FragmentShader);
-                    Console.WriteLine(infoLog);
-                }
-            }
+            int vertexShader = CompileShader(ShaderType.VertexShader, vertexSource);
+            int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentSource);
 
             // Link Program
             {
                 Handle = GL.CreateProgram();
 
-                GL.AttachShader(Handle, VertexShader);
-                GL.AttachShader(Handle, FragmentShader);
+                GL.AttachShader(Handle, vertexShader);
+                GL.AttachShader(Handle, fragmentShader);
 
                 GL.LinkProgram(Handle);
 
@@ -65,10 +34,10 @@ namespace GameEngine.Engine
             }
 
             // Cleanup
-            GL.DetachShader(Handle, VertexShader);
-            GL.DetachShader(Handle, FragmentShader);
-            GL.DeleteShader(FragmentShader);
-            GL.DeleteShader(VertexShader);
+            GL.DetachShader(Handle, vertexShader);
+            GL.DetachShader(Handle, fragmentShader);
+            GL.DeleteShader(fragmentShader);
+            GL.DeleteShader(vertexShader);
 
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 
@@ -83,6 +52,23 @@ namespace GameEngine.Engine
 
                 uniformLocations.Add(key, location);
             }
+        }
+
+        static int CompileShader(ShaderType type, string source)
+        {
+            int shader = GL.CreateShader(type);
+            GL.ShaderSource(shader, source);
+
+            GL.CompileShader(shader);
+
+            GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
+            if (success == 0)
+            {
+                string infoLog = GL.GetShaderInfoLog(shader);
+                Console.WriteLine(infoLog);
+            }
+
+            return shader;
         }
 
         public void Use()

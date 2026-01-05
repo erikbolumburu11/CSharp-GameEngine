@@ -1,3 +1,4 @@
+using System;
 ﻿using OpenTK.Graphics.OpenGL4;
 
 namespace GameEngine.Engine.Components
@@ -28,14 +29,13 @@ namespace GameEngine.Engine.Components
             vbo = new VertexBuffer<float>(Util.cubeVertices);
         }
 
-        // TODO: Shaders should be in a dictionary or something to avoid creating the same shader
-        //       multiple times
         void CreateShader()
         {
             vao.Bind();
             vbo.Bind();
 
-            shader = new Shader(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
+            ShaderManager manager = ShaderManager.Current ?? throw new InvalidOperationException("ShaderManager not initialized.");
+            shader = manager.Get(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
 
             int stride = 8 * sizeof(float);
 
