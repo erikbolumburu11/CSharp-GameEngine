@@ -94,8 +94,15 @@ namespace GameEngine.Engine
                 shader.SetVector3("viewPos", camera.position);
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
                 shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
+=======
+                shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
+
+                shadowMap.BindForReading(TextureUnit.Texture2);
+                shader.SetInt("shadowMap", 2);
+>>>>>>> Stashed changes
 
                 shadowMap.BindForReading(TextureUnit.Texture2);
                 shader.SetInt("shadowMap", 2);

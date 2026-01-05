@@ -9,7 +9,10 @@ uniform mat4 view;
 uniform mat4 projection;
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 uniform mat4 lightSpaceMatrix;
 
 uniform vec2 uvTiling;
@@ -31,5 +34,8 @@ void main()
 =======
     texCoord = aTexCoord * uvTiling + uvOffset;
     fragPosLightSpace = lightSpaceMatrix * fragPos;
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }
