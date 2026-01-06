@@ -18,6 +18,7 @@ namespace GameEngine.Editor
         private Material? currentMaterial;
         private string? currentMaterialPath;
         private const string NoTextureLabel = "(None)";
+        private static readonly string[] BuiltInTextureLabels = { "White", "Gray", "Black" };
         private static readonly HashSet<string> TextureExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".png",
@@ -435,6 +436,9 @@ namespace GameEngine.Editor
         {
             combo.Items.Clear();
             combo.Items.Add(NoTextureLabel);
+
+            foreach (var label in BuiltInTextureLabels)
+                combo.Items.Add(label);
 
             foreach (var path in EnumerateTexturePaths())
                 combo.Items.Add(path);

@@ -21,8 +21,43 @@ namespace GameEngine.Engine
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
 
+        private static bool TryGetBuiltInTexture(TextureManager textureManager, string? textureId, out Texture texture)
+        {
+            if (string.IsNullOrWhiteSpace(textureId))
+            {
+                texture = textureManager.White;
+                return false;
+            }
+
+            string normalized = textureId.Trim();
+            if (string.Equals(normalized, "White", StringComparison.OrdinalIgnoreCase))
+            {
+                texture = textureManager.White;
+                return true;
+            }
+
+            if (string.Equals(normalized, "Gray", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "Grey", StringComparison.OrdinalIgnoreCase))
+            {
+                texture = textureManager.Grey;
+                return true;
+            }
+
+            if (string.Equals(normalized, "Black", StringComparison.OrdinalIgnoreCase))
+            {
+                texture = textureManager.Black;
+                return true;
+            }
+
+            texture = textureManager.White;
+            return false;
+        }
+
         public Texture GetDiffuse(TextureManager textureManager)
         {
+            if (TryGetBuiltInTexture(textureManager, diffuseTex, out var builtIn))
+                return builtIn;
+
             if (string.IsNullOrWhiteSpace(diffuseTex) || ProjectContext.Current == null)
                 return textureManager.White;
 
@@ -40,6 +75,9 @@ namespace GameEngine.Engine
 
         public Texture GetSpecular(TextureManager textureManager)
         {
+            if (TryGetBuiltInTexture(textureManager, specularTex, out var builtIn))
+                return builtIn;
+
             if (string.IsNullOrWhiteSpace(specularTex) || ProjectContext.Current == null)
                 return textureManager.Grey;
 
