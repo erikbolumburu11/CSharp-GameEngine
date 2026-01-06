@@ -1,5 +1,5 @@
 #version 430 core
-#define DEBUG_OUTPUT_SHADOWMAP 1
+#define DEBUG_OUTPUT_SHADOWMAP 0
 
 struct Light
 {
@@ -42,15 +42,24 @@ float ShadowFactor(vec4 fragPosLS, vec3 normal, vec3 lightDir)
     // Outside shadow map = not in shadow
     if (projCoords.z > 1.0) return 0.0;
 
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
+    float NdotL = max(dot(normal, lightDir), 0.0);
 
-    // Bias reduces shadow acne (scale bias by surface angle)
-    float bias = max(0.0007 * (1.0 - dot(normal, -lightDir)), 0.0003);
+    float bias = max(0.0008 * (1.0 - NdotL), 0.0002);
 
-    // Basic hard shadow
-    float shadow = (currentDepth - bias) > closestDepth ? 1.0 : 0.0;
-    return shadow;
+    // 3x3 PCF
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
+            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
+        }
+    }
+
+    return shadow / 9.0;
 }
 
 void main()
@@ -106,7 +115,7 @@ void main()
             L = normalize(-lights[i].directionType.xyz);
             attenuation = 1.0;
 
-            shadow = ShadowFactor(fragPosLightSpace, N, lights[i].directionType.xyz);
+            shadow = ShadowFactor(fragPosLightSpace, N, L);
         }
 
         float NdotL = max(dot(N, L), 0.0);

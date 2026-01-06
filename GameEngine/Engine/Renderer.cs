@@ -41,8 +41,10 @@ namespace GameEngine.Engine
                 shadowMap.BindForWriting();
                 GL.Clear(ClearBufferMask.DepthBufferBit);
 
-                GL.Enable(EnableCap.CullFace);
+                GL.Disable(EnableCap.CullFace);
                 GL.CullFace(TriangleFace.Front);
+                GL.Enable(EnableCap.PolygonOffsetFill);
+                GL.PolygonOffset(2.0f, 4.0f);
 
                 string depthVert = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.vert";
                 string depthFrag = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.frag";
@@ -68,8 +70,10 @@ namespace GameEngine.Engine
             // Restore GL
             GL.CullFace(TriangleFace.Back);
             GL.Disable(EnableCap.CullFace);
+            GL.Disable(EnableCap.PolygonOffsetFill);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Viewport(0, 0, camera.Width, camera.Height);
+
 
             if (hasShadowPass)
                 shadowMap!.BindForReading(TextureUnit.Texture2);
@@ -137,14 +141,14 @@ namespace GameEngine.Engine
             Vector3 lightPos = sceneCenter - lightDir.Normalized() * distanceBack;
 
             // Ortho bounds: tweak these to fit your scene
-            float orthoSize = 20f;
+            float orthoSize = 10;
             float near = 1f;
             float far = 60f;
 
             var lightView = Matrix4.LookAt(lightPos, sceneCenter, Vector3.UnitY);
             var lightProj = Matrix4.CreateOrthographic(orthoSize, orthoSize, near, far);
 
-            return lightProj * lightView; 
+            return lightView * lightProj; 
         }
     }
 }
