@@ -9,6 +9,7 @@ namespace GameEngine.Engine
         Renderer renderer;
         public LightManager lightManager { get; private set; }
         public TextureManager textureManager { get; private set; }
+        public ShaderManager shaderManager { get; private set; }
         public MaterialManager materialManager { get; private set; }
 
         public Game game;
@@ -22,6 +23,7 @@ namespace GameEngine.Engine
             game = new Game();
 
             textureManager = new TextureManager();
+            shaderManager = new ShaderManager();
             materialManager = new MaterialManager();
             renderer = new Renderer();
         }
@@ -36,6 +38,7 @@ namespace GameEngine.Engine
 
             textureManager.InitializeDefaultTextures();
             materialManager.InitializeDefaultMaterials();
+            shaderManager.InitializeDefaultShaders();
             lightManager = new();
 
             glInitialized = true;
@@ -51,6 +54,7 @@ namespace GameEngine.Engine
             renderer.Render(
                 materialManager, 
                 textureManager,
+                shaderManager,
                 game.gameObjectManager,
                 lightManager,
                 game.scene,

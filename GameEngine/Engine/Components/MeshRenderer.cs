@@ -13,13 +13,20 @@ namespace GameEngine.Engine.Components
         public VertexBuffer<float> vbo { get; private set; }
 
         public string? material;
-        public Shader shader;
+        public Shader? shader;
+        public string? vertexShaderPath;
+        public string? fragmentShaderPath;
 
         public override void Start()
         {
             base.Start();
             CreateBuffers();
-            CreateShader();
+            SetupMesh();
+
+            if (string.IsNullOrWhiteSpace(vertexShaderPath))
+                vertexShaderPath = Util.GetDefaultVertPath();
+            if (string.IsNullOrWhiteSpace(fragmentShaderPath))
+                fragmentShaderPath = Util.GetDefaultFragPath();
         }
 
         void CreateBuffers()
@@ -28,14 +35,10 @@ namespace GameEngine.Engine.Components
             vbo = new VertexBuffer<float>(Util.cubeVertices);
         }
 
-        // TODO: Shaders should be in a dictionary or something to avoid creating the same shader
-        //       multiple times
-        void CreateShader()
+        void SetupMesh()
         {
             vao.Bind();
             vbo.Bind();
-
-            shader = new Shader(Util.GetDefaultVertPath(), Util.GetDefaultFragPath());
 
             int stride = 8 * sizeof(float);
 

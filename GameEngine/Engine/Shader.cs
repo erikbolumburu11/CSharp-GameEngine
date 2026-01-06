@@ -7,68 +7,11 @@ namespace GameEngine.Engine
     {
         public int Handle { get; private set; }
 
-        Dictionary<string, int> uniformLocations;
+        readonly Dictionary<string, int> uniformLocations;
 
-        public Shader(string vertexPath, string fragmentPath)
+        public Shader(int handle)
         {
-            int VertexShader;
-            int FragmentShader;
-
-            string VertexShaderSource = File.ReadAllText(vertexPath);
-            string FragmentShaderSource = File.ReadAllText(fragmentPath);
-
-            VertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(VertexShader, VertexShaderSource);
-
-            FragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(FragmentShader, FragmentShaderSource);
-
-            // Compile Vertex Shader
-            {
-                GL.CompileShader(VertexShader);
-
-                GL.GetShader(VertexShader, ShaderParameter.CompileStatus, out int success);
-                if (success == 0)
-                {
-                    string infoLog = GL.GetShaderInfoLog(VertexShader);
-                    Console.WriteLine(infoLog);
-                }
-            }
-
-            // Compile Fragment Shader
-            {
-                GL.CompileShader(FragmentShader);
-
-                GL.GetShader(FragmentShader, ShaderParameter.CompileStatus, out int success);
-                if (success == 0)
-                {
-                    string infoLog = GL.GetShaderInfoLog(FragmentShader);
-                    Console.WriteLine(infoLog);
-                }
-            }
-
-            // Link Program
-            {
-                Handle = GL.CreateProgram();
-
-                GL.AttachShader(Handle, VertexShader);
-                GL.AttachShader(Handle, FragmentShader);
-
-                GL.LinkProgram(Handle);
-
-                GL.GetProgram(Handle, GetProgramParameterName.LinkStatus, out int success);
-                if (success == 0)
-                {
-                    string infoLog = GL.GetProgramInfoLog(Handle);
-                    Console.WriteLine(infoLog);
-                }
-            }
-
-            // Cleanup
-            GL.DetachShader(Handle, VertexShader);
-            GL.DetachShader(Handle, FragmentShader);
-            GL.DeleteShader(FragmentShader);
-            GL.DeleteShader(VertexShader);
+            Handle = handle;
 
             GL.GetProgram(Handle, GetProgramParameterName.ActiveUniforms, out var numberOfUniforms);
 

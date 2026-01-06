@@ -13,6 +13,7 @@ namespace GameEngine.Engine
         (
             MaterialManager materialManager,
             TextureManager textureManager,
+            ShaderManager shaderManager,
             GameObjectManager gameObjectManager,
             LightManager lightManager,
             Scene scene,
@@ -31,7 +32,10 @@ namespace GameEngine.Engine
                 if (meshRenderer == null) continue;
 
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
-                Shader shader = meshRenderer.shader;
+                Shader shader = meshRenderer.shader ??= shaderManager.Get(
+                    meshRenderer.vertexShaderPath,
+                    meshRenderer.fragmentShaderPath
+                );
 
                 shader.Use();
 
