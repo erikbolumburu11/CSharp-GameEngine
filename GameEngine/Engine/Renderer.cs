@@ -44,7 +44,7 @@ namespace GameEngine.Engine
                 GL.Disable(EnableCap.CullFace);
                 GL.CullFace(TriangleFace.Front);
                 GL.Enable(EnableCap.PolygonOffsetFill);
-                GL.PolygonOffset(2.0f, 4.0f);
+                GL.PolygonOffset(2.0f, 4.0f); // tweak these
 
                 string depthVert = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.vert";
                 string depthFrag = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.frag";
@@ -141,9 +141,9 @@ namespace GameEngine.Engine
             Vector3 lightPos = sceneCenter - lightDir.Normalized() * distanceBack;
 
             // Ortho bounds: tweak these to fit your scene
-            float orthoSize = 10;
+            float orthoSize = 7;
             float near = 1f;
-            float far = 60f;
+            float far = 40f;
 
             var lightView = Matrix4.LookAt(lightPos, sceneCenter, Vector3.UnitY);
             var lightProj = Matrix4.CreateOrthographic(orthoSize, orthoSize, near, far);

@@ -33,22 +33,20 @@ out vec4 FragColor;
 
 float ShadowFactor(vec4 fragPosLS, vec3 normal, vec3 lightDir)
 {
-    // Perspective divide (for ortho, w is 1, still fine)
     vec3 projCoords = fragPosLS.xyz / fragPosLS.w;
 
-    // Map from [-1,1] to [0,1]
     projCoords = projCoords * 0.5 + 0.5;
 
-    // Outside shadow map = not in shadow
     if (projCoords.z > 1.0) return 0.0;
 
     float currentDepth = projCoords.z;
     float NdotL = max(dot(normal, lightDir), 0.0);
 
-    float bias = max(0.0008 * (1.0 - NdotL), 0.0002);
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.0005);
 
-    // 3x3 PCF
+
     float shadow = 0.0;
+
     vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
     for (int x = -1; x <= 1; x++)
     {
@@ -58,8 +56,10 @@ float ShadowFactor(vec4 fragPosLS, vec3 normal, vec3 lightDir)
             shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;
         }
     }
+    shadow = shadow / 9.0;
 
-    return shadow / 9.0;
+    shadow = pow(shadow, 0.7);
+    return shadow * 0.7;
 }
 
 void main()
