@@ -11,9 +11,12 @@ uniform mat4 projection;
 uniform vec2 uvTiling;
 uniform vec2 uvOffset;
 
+uniform mat4 lightSpaceMatrix;
+
 out vec3 normal;
 out vec3 fragPos;       // world-space position
 out vec2 texCoord;      
+out vec4 fragPosLightSpace;
 
 void main()
 {
@@ -21,4 +24,5 @@ void main()
     fragPos = vec3(vec4(aPosition, 1.0f) * model);
     normal = mat3(transpose(inverse(model))) * aNormal;
     texCoord = aTexCoord * uvTiling + uvOffset;
+    fragPosLightSpace = vec4(aPosition, 1.0) * model * lightSpaceMatrix;
 }

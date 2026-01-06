@@ -28,6 +28,16 @@ namespace GameEngine.Engine
             }
         }
 
+        int GetUniformLocation(string name)
+        {
+            if (uniformLocations.TryGetValue(name, out int location))
+                return location;
+
+            location = GL.GetUniformLocation(Handle, name);
+            uniformLocations[name] = location; // cache (may be -1 if optimized out)
+            return location;
+        }
+
         public void Use()
         {
             GL.UseProgram(Handle);
@@ -37,7 +47,8 @@ namespace GameEngine.Engine
         {
             GL.UseProgram(Handle);
 
-            int location = GL.GetUniformLocation(Handle, "transform");
+            int location = GetUniformLocation("transform");
+            if (location == -1) return;
 
             GL.UniformMatrix4(location, true, ref transform);
         }
@@ -50,31 +61,41 @@ namespace GameEngine.Engine
         public void SetInt(string name, int data)
         {
             GL.UseProgram(Handle);
-            GL.Uniform1(uniformLocations[name], data);
+            int location = GetUniformLocation(name);
+            if (location == -1) return;
+            GL.Uniform1(location, data);
         }
 
         public void SetFloat(string name, float data)
         {
             GL.UseProgram(Handle);
-            GL.Uniform1(uniformLocations[name], data);
+            int location = GetUniformLocation(name);
+            if (location == -1) return;
+            GL.Uniform1(location, data);
         }
 
         public void SetMatrix4(string name, Matrix4 data)
         {
             GL.UseProgram(Handle);
-            GL.UniformMatrix4(uniformLocations[name], true, ref data);
+            int location = GetUniformLocation(name);
+            if (location == -1) return;
+            GL.UniformMatrix4(location, true, ref data);
         }
 
         public void SetVector3(string name, Vector3 data)
         {
             GL.UseProgram(Handle);
-            GL.Uniform3(uniformLocations[name], data);
+            int location = GetUniformLocation(name);
+            if (location == -1) return;
+            GL.Uniform3(location, data);
         }
 
         public void SetVector2(string name, Vector2 data)
         {
             GL.UseProgram(Handle);
-            GL.Uniform2(uniformLocations[name], data);
+            int location = GetUniformLocation(name);
+            if (location == -1) return;
+            GL.Uniform2(location, data);
         }
 
         private bool disposedValue = false;
