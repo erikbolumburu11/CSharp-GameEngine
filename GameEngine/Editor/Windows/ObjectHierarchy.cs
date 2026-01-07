@@ -55,6 +55,35 @@ namespace GameEngine.Editor
                 SelectObject();
             };
 
+            listBox.MouseDown += (s, e) =>
+            {
+                if (e.Button != MouseButtons.Right)
+                    return;
+
+                int index = listBox.IndexFromPoint(e.Location);
+                if (index != ListBox.NoMatches)
+                {
+                    listBox.SelectedIndex = index;
+                }
+                else
+                {
+                    listBox.ClearSelected();
+                }
+            };
+
+            ContextMenuStrip objectMenu = new ContextMenuStrip();
+            ToolStripMenuItem deleteItem = new ToolStripMenuItem("Delete", null, (s, e) =>
+            {
+                DeleteSelectedObject();
+            });
+            objectMenu.Items.Add(deleteItem);
+            objectMenu.Opening += (s, e) =>
+            {
+                if (!(listBox.SelectedItem is GameObject))
+                    e.Cancel = true;
+            };
+            listBox.ContextMenuStrip = objectMenu;
+
             layout.Controls.Add(newCubeButton);
             layout.Controls.Add(newGameObjectButton);
             layout.Controls.Add(listBox);
@@ -73,7 +102,27 @@ namespace GameEngine.Editor
 
         private void GameObjectRemoved(GameObject obj)
         {
-            throw new NotImplementedException();
+            int removedIndex = listBox.Items.IndexOf(obj);
+            if (removedIndex == ListBox.NoMatches)
+            {
+                SetGameObjects(gameObjectManager.gameObjects);
+                return;
+            }
+
+            bool wasSelected = listBox.SelectedIndex == removedIndex;
+            listBox.Items.RemoveAt(removedIndex);
+
+            if (wasSelected)
+            {
+                if (listBox.Items.Count == 0)
+                {
+                    editorState.Select(null);
+                    return;
+                }
+
+                int nextIndex = Math.Min(removedIndex, listBox.Items.Count - 1);
+                listBox.SelectedIndex = nextIndex;
+            }
         }
 
         private void GameObjectAdded(GameObject obj)
@@ -103,6 +152,14 @@ namespace GameEngine.Editor
             if (listBox.SelectedItem is GameObject gameObject)
             {
                 editorState.Select(gameObject);
+            }
+        }
+
+        private void DeleteSelectedObject()
+        {
+            if (listBox.SelectedItem is GameObject gameObject)
+            {
+                gameObjectManager.RemoveGameObject(gameObject);
             }
         }
     }

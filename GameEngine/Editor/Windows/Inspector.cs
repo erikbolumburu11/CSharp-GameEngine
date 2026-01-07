@@ -102,7 +102,7 @@ namespace GameEngine.Editor
             editorState.OnSelectionChanged += UpdateInspectorFields;
         }
 
-        private void UpdateInspectorFields(GameObject obj)
+        private void UpdateInspectorFields(GameObject? obj)
         {
             if (obj == null)
             {
@@ -129,12 +129,12 @@ namespace GameEngine.Editor
                 if (comp is Light light)
                 {
                     AddSeparator();
-                    AddSection(CreateEditorSection(comp.name, new LightEditor(light)));
+                    AddSection(CreateEditorSection(comp.name, new LightEditor(light), () => RemoveComponent(comp)));
                 }
                 else if (comp is MeshRenderer meshRenderer)
                 {
                     AddSeparator();
-                    AddSection(CreateEditorSection(comp.name, new MeshRendererEditor(meshRenderer, editorState)));
+                    AddSection(CreateEditorSection(comp.name, new MeshRendererEditor(meshRenderer, editorState), () => RemoveComponent(comp)));
                 }
             }
 
@@ -143,28 +143,62 @@ namespace GameEngine.Editor
             AddSection(addComponentButton);
         }
 
-        private Control CreateEditorSection<T>(string? header, Editor<T> editor)
+        private Control CreateEditorSection<T>(string? header, Editor<T> editor, Action? onRemove = null)
         {
             var section = new Panel
             {
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 2, 0, 2),
+                Margin = new Padding(0, 4, 0, 4),
                 Padding = Padding.Empty
             };
 
             if (!string.IsNullOrWhiteSpace(header))
             {
+                var headerLayout = new TableLayoutPanel
+                {
+                    ColumnCount = onRemove != null ? 2 : 1,
+                    RowCount = 1,
+                    AutoSize = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    Dock = DockStyle.Top,
+                    Margin = new Padding(0, 4, 0, 4),
+                    Padding = Padding.Empty
+                };
+                headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+                if (onRemove != null)
+                    headerLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                headerLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
                 var headerLabel = new Label
                 {
                     Text = header,
                     Font = new Font(Font, FontStyle.Bold),
                     AutoSize = true,
-                    Margin = new Padding(0, 4, 0, 2),
-                    Dock = DockStyle.Top
+                    Margin = Padding.Empty,
+                    Dock = DockStyle.Fill
                 };
-                section.Controls.Add(headerLabel);
+                headerLayout.Controls.Add(headerLabel, 0, 0);
+
+                if (onRemove != null)
+                {
+                    var removeButton = new Button
+                    {
+                        Text = "x",
+                        Width = 18,
+                        Height = 18,
+                        Margin = Padding.Empty,
+                        Padding = Padding.Empty,
+                        FlatStyle = FlatStyle.Flat,
+                        TabStop = false
+                    };
+                    removeButton.FlatAppearance.BorderSize = 0;
+                    removeButton.Click += (s, e) => onRemove();
+                    headerLayout.Controls.Add(removeButton, 1, 0);
+                }
+
+                section.Controls.Add(headerLayout);
             }
 
             var table = new TableLayoutPanel
@@ -209,6 +243,18 @@ namespace GameEngine.Editor
             table.Width = section.ClientSize.Width;
 
             return section;
+        }
+
+        private void RemoveComponent(Component component)
+        {
+            var selected = editorState.SelectedObject;
+            if (selected == null)
+                return;
+
+            if (!selected.RemoveComponent(component))
+                return;
+
+            UpdateInspectorFields(selected);
         }
 
         private void ClearInspector()

@@ -72,6 +72,17 @@ namespace GameEngine.Engine
             return component;
         }
 
+        public bool RemoveComponent(Component component)
+        {
+            int index = components.IndexOf(component);
+            if (index < 0)
+                return false;
+
+            components.RemoveAt(index);
+            component.OnDestroy();
+            return true;
+        }
+
         public T? GetComponent<T>() where T : Component
         {
             return components.OfType<T>().FirstOrDefault();

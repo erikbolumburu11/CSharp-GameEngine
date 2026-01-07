@@ -61,6 +61,16 @@ namespace GameEngine.Engine
             GameObjectChanged?.Invoke(gameObject);
         }
 
+        public bool RemoveGameObject(GameObject gameObject)
+        {
+            if (!gameObjects.Remove(gameObject))
+                return false;
+
+            gameObject.Changed -= OnObjectChanged;
+            GameObjectRemoved?.Invoke(gameObject);
+            return true;
+        }
+
         public void OnObjectChanged(GameObject gameObject)
         {
             GameObjectChanged?.Invoke(gameObject);
