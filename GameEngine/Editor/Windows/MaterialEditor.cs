@@ -1,4 +1,5 @@
 using GameEngine.Engine;
+using OpenTK.Mathematics;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace GameEngine.Editor
@@ -15,6 +16,8 @@ namespace GameEngine.Editor
         private ComboBox specularTextureComboBox;
         private Button diffuseTextureBrowseButton;
         private Button specularTextureBrowseButton;
+        private Vector2Control uvTilingControl;
+        private Vector2Control uvOffsetControl;
         private Material? currentMaterial;
         private string? currentMaterialPath;
         private const string NoTextureLabel = "(None)";
@@ -62,6 +65,7 @@ namespace GameEngine.Editor
             AddSection(BuildMaterialActions());
             AddSection(BuildDiffuseTextureEditor());
             AddSection(BuildSpecularTextureEditor());
+            AddSection(BuildUvEditor());
             AddSeparator();
         }
 
@@ -238,6 +242,83 @@ namespace GameEngine.Editor
             browseButton = localBrowseButton;
 
             return section;
+        }
+
+        private Control BuildUvEditor()
+        {
+            var section = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2),
+                Padding = Padding.Empty
+            };
+
+            var headerLabel = new Label
+            {
+                Text = "UV",
+                Font = new Font(Font, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(0, 4, 0, 2),
+                Dock = DockStyle.Top
+            };
+            section.Controls.Add(headerLabel);
+
+            var layout = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var tilingLabel = new Label
+            {
+                Text = "Tiling",
+                AutoSize = true,
+                Margin = new Padding(0, 4, 2, 0)
+            };
+            var tilingRow = BuildVector2Row(out uvTilingControl);
+            uvTilingControl.ValueChanged += _ => OnUvTilingChanged();
+
+            var offsetLabel = new Label
+            {
+                Text = "Offset",
+                AutoSize = true,
+                Margin = new Padding(0, 4, 2, 0)
+            };
+            var offsetRow = BuildVector2Row(out uvOffsetControl);
+            uvOffsetControl.ValueChanged += _ => OnUvOffsetChanged();
+
+            layout.Controls.Add(tilingLabel, 0, 0);
+            layout.Controls.Add(tilingRow, 1, 0);
+            layout.Controls.Add(offsetLabel, 0, 1);
+            layout.Controls.Add(offsetRow, 1, 1);
+
+            section.Controls.Add(layout);
+            section.Controls.SetChildIndex(layout, 0);
+
+            section.Resize += (s, e) => layout.Width = section.ClientSize.Width;
+            layout.Width = section.ClientSize.Width;
+
+            return section;
+        }
+
+        private Control BuildVector2Row(out Vector2Control control)
+        {
+            control = new Vector2Control
+            {
+                Margin = Padding.Empty
+            };
+
+            return control;
         }
 
         private void AddSection(Control control)
@@ -429,6 +510,13 @@ namespace GameEngine.Editor
             {
                 SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTex);
                 SetTextureSelection(specularTextureComboBox, currentMaterial.specularTex);
+                SetUvControlsEnabled(true);
+                SetUvValues(currentMaterial.uvTiling, currentMaterial.uvOffset);
+            }
+            else
+            {
+                SetUvControlsEnabled(false);
+                SetUvValues(new Vector2(1f, 1f), new Vector2(0f, 0f));
             }
         }
 
@@ -535,6 +623,42 @@ namespace GameEngine.Editor
             }
 
             return null;
+        }
+
+        private void OnUvTilingChanged()
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.uvTiling = uvTilingControl.Value;
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void OnUvOffsetChanged()
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.uvOffset = uvOffsetControl.Value;
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void SetUvValues(Vector2 tiling, Vector2 offset)
+        {
+            if (uvTilingControl == null || uvOffsetControl == null)
+                return;
+
+            uvTilingControl.Value = tiling;
+            uvOffsetControl.Value = offset;
+        }
+
+        private void SetUvControlsEnabled(bool enabled)
+        {
+            if (uvTilingControl == null || uvOffsetControl == null)
+                return;
+
+            uvTilingControl.Enabled = enabled;
+            uvOffsetControl.Enabled = enabled;
         }
 
         private bool TryGetCurrentMaterial(out Material material, out string relPath)
