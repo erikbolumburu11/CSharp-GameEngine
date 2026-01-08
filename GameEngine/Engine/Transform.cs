@@ -8,7 +8,20 @@ namespace GameEngine.Engine
         public Vector3 localScale;
         public Quaternion localRotation;
 
-        public Transform? parent;
+        private Transform? _parent;
+
+        public Transform? parent
+        {
+            get => _parent;
+            set
+            {
+                if (_parent == value)
+                    return;
+
+                _parent = value;
+                GameObject.NotifyHierarchyChanged();
+            }
+        }
 
         public GameObject GameObject { get; private set; }
 

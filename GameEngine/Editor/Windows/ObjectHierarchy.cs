@@ -1,4 +1,4 @@
-﻿using GameEngine.Engine;
+using GameEngine.Engine;
 using OpenTK.Mathematics;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -6,10 +6,8 @@ namespace GameEngine.Editor
 {
     public class ObjectHierarchy : DockContent
     {
-        ListBox listBox;
-        readonly Dictionary<GameObject, int> depthByObject = new();
-        int dragSourceIndex = ListBox.NoMatches;
-        Point dragStartPoint = Point.Empty;
+        TreeView treeView;
+        readonly Dictionary<GameObject, TreeNode> nodesByObject = new();
 
         public event Action<string>? GameObjectSelected;
         GameObjectManager gameObjectManager;
@@ -49,45 +47,63 @@ namespace GameEngine.Editor
                 gameObjectManager.CreateGameObject();
             };
 
-            listBox = new ListBox
+            treeView = new TreeView
             {
                 Dock = DockStyle.Fill,
                 AllowDrop = true,
-                DrawMode = DrawMode.OwnerDrawFixed,
+                HideSelection = false,
             };
 
-            listBox.SelectedIndexChanged += (s, e) =>
+            treeView.AfterSelect += (s, e) =>
             {
                 SelectObject();
             };
-
-            listBox.MouseDown += ListBoxMouseDown;
-            listBox.MouseMove += ListBoxMouseMove;
-            listBox.DragEnter += ListBoxDragEnter;
-            listBox.DragOver += ListBoxDragOver;
-            listBox.DragDrop += ListBoxDragDrop;
-            listBox.DrawItem += ListBoxDrawItem;
+            treeView.NodeMouseClick += TreeViewNodeMouseClick;
+            treeView.ItemDrag += TreeViewItemDrag;
+            treeView.DragEnter += TreeViewDragEnter;
+            treeView.DragOver += TreeViewDragOver;
+            treeView.DragDrop += TreeViewDragDrop;
 
             ContextMenuStrip objectMenu = new ContextMenuStrip();
+            ToolStripMenuItem moveUpItem = new ToolStripMenuItem("Move Up", null, (s, e) =>
+            {
+                MoveSelectedObject(-1);
+            });
+            ToolStripMenuItem moveDownItem = new ToolStripMenuItem("Move Down", null, (s, e) =>
+            {
+                MoveSelectedObject(1);
+            });
             ToolStripMenuItem deleteItem = new ToolStripMenuItem("Delete", null, (s, e) =>
             {
                 DeleteSelectedObject();
             });
+            objectMenu.Items.Add(moveUpItem);
+            objectMenu.Items.Add(moveDownItem);
+            objectMenu.Items.Add(new ToolStripSeparator());
             objectMenu.Items.Add(deleteItem);
             objectMenu.Opening += (s, e) =>
             {
-                if (!(listBox.SelectedItem is GameObject))
+                if (!(treeView.SelectedNode?.Tag is GameObject selected))
+                {
                     e.Cancel = true;
+                    return;
+                }
+
+                int siblingCount;
+                int siblingIndex = GetSiblingIndex(selected, out siblingCount);
+                moveUpItem.Enabled = siblingIndex > 0;
+                moveDownItem.Enabled = siblingIndex >= 0 && siblingIndex < siblingCount - 1;
             };
-            listBox.ContextMenuStrip = objectMenu;
+            treeView.ContextMenuStrip = objectMenu;
 
             layout.Controls.Add(newCubeButton);
             layout.Controls.Add(newGameObjectButton);
-            layout.Controls.Add(listBox);
+            layout.Controls.Add(treeView);
 
             gameObjectManager.GameObjectAdded += GameObjectAdded;
             gameObjectManager.GameObjectRemoved += GameObjectRemoved;
             gameObjectManager.GameObjectChanged += GameObjectChanged;
+            gameObjectManager.GameObjectHierarchyChanged += GameObjectHierarchyChanged;
         }
 
         public void RefreshList()
@@ -97,22 +113,19 @@ namespace GameEngine.Editor
 
         private void GameObjectRemoved(GameObject obj)
         {
-            int removedIndex = listBox.Items.IndexOf(obj);
-            bool wasSelected = listBox.SelectedIndex == removedIndex;
+            bool wasSelected = treeView.SelectedNode?.Tag == obj;
             SetGameObjects(gameObjectManager.gameObjects);
 
-            if (wasSelected)
-            {
-                if (listBox.Items.Count == 0)
-                {
-                    editorState.Select(null);
-                    return;
-                }
+            if (!wasSelected)
+                return;
 
-                int fallbackIndex = removedIndex == ListBox.NoMatches ? 0 : removedIndex;
-                int nextIndex = Math.Min(fallbackIndex, listBox.Items.Count - 1);
-                listBox.SelectedIndex = nextIndex;
+            if (treeView.Nodes.Count == 0)
+            {
+                editorState.Select(null);
+                return;
             }
+
+            treeView.SelectedNode = treeView.Nodes[0];
         }
 
         private void GameObjectAdded(GameObject obj)
@@ -122,31 +135,111 @@ namespace GameEngine.Editor
 
         private void GameObjectChanged(GameObject obj)
         {
-            int index = listBox.Items.IndexOf(obj);
-            if (index >= 0)
+            if (nodesByObject.TryGetValue(obj, out var node))
             {
-                listBox.Items[index] = obj;
-                listBox.Refresh();
+                node.Text = obj.name;
             }
+        }
+
+        private void GameObjectHierarchyChanged(GameObject obj)
+        {
+            SetGameObjects(gameObjectManager.gameObjects);
         }
 
         public void SetGameObjects(IEnumerable<GameObject> objects)
         {
-            var selectedObject = listBox.SelectedItem as GameObject;
+            var selectedObject = treeView.SelectedNode?.Tag as GameObject;
 
-            listBox.Items.Clear();
-            depthByObject.Clear();
+            treeView.BeginUpdate();
+            treeView.Nodes.Clear();
+            nodesByObject.Clear();
 
-            foreach (GameObject obj in BuildHierarchyList(objects))
-                listBox.Items.Add(obj);
+            var allObjects = objects.ToList();
+            var objectSet = new HashSet<GameObject>(allObjects);
+            var rootObjects = new List<GameObject>();
+            var byParent = new Dictionary<GameObject, List<GameObject>>();
 
-            if (selectedObject != null && listBox.Items.Contains(selectedObject))
-                listBox.SelectedItem = selectedObject;
+            foreach (var obj in allObjects)
+            {
+                GameObject? parent = obj.transform.parent?.GameObject;
+                if (parent != null && !objectSet.Contains(parent))
+                    parent = null;
+
+                if (parent == null)
+                {
+                    rootObjects.Add(obj);
+                    continue;
+                }
+
+                if (!byParent.TryGetValue(parent, out var children))
+                {
+                    children = new List<GameObject>();
+                    byParent[parent] = children;
+                }
+
+                children.Add(obj);
+            }
+
+            var visited = new HashSet<GameObject>();
+
+            TreeNode MakeNode(GameObject obj)
+            {
+                var node = new TreeNode(obj.name) { Tag = obj };
+                nodesByObject[obj] = node;
+                visited.Add(obj);
+                return node;
+            }
+
+            void AddChildren(GameObject parent, TreeNode parentNode)
+            {
+                if (!byParent.TryGetValue(parent, out var children))
+                    return;
+
+                foreach (var child in children)
+                {
+                    if (visited.Contains(child))
+                        continue;
+
+                    var childNode = MakeNode(child);
+                    parentNode.Nodes.Add(childNode);
+                    AddChildren(child, childNode);
+                }
+            }
+
+            foreach (var root in rootObjects)
+            {
+                if (visited.Contains(root))
+                    continue;
+
+                var rootNode = MakeNode(root);
+                treeView.Nodes.Add(rootNode);
+                AddChildren(root, rootNode);
+            }
+
+            foreach (var obj in allObjects)
+            {
+                if (visited.Contains(obj))
+                    continue;
+
+                var node = MakeNode(obj);
+                treeView.Nodes.Add(node);
+                AddChildren(obj, node);
+            }
+
+            treeView.ExpandAll();
+
+            if (selectedObject != null && nodesByObject.TryGetValue(selectedObject, out var selectedNode))
+            {
+                treeView.SelectedNode = selectedNode;
+                selectedNode.EnsureVisible();
+            }
+
+            treeView.EndUpdate();
         }
 
         public void SelectObject()
         {
-            if (listBox.SelectedItem is GameObject gameObject)
+            if (treeView.SelectedNode?.Tag is GameObject gameObject)
             {
                 editorState.Select(gameObject);
             }
@@ -154,60 +247,69 @@ namespace GameEngine.Editor
 
         private void DeleteSelectedObject()
         {
-            if (listBox.SelectedItem is GameObject gameObject)
+            if (treeView.SelectedNode?.Tag is GameObject gameObject)
             {
                 gameObjectManager.RemoveGameObject(gameObject);
             }
         }
 
-        private void ListBoxMouseDown(object? sender, MouseEventArgs e)
+        private void MoveSelectedObject(int direction)
         {
-            if (e.Button == MouseButtons.Right)
-            {
-                int index = listBox.IndexFromPoint(e.Location);
-                if (index != ListBox.NoMatches)
-                {
-                    listBox.SelectedIndex = index;
-                }
-                else
-                {
-                    listBox.ClearSelected();
-                }
-
+            if (!(treeView.SelectedNode?.Tag is GameObject selected))
                 return;
-            }
 
-            if (e.Button == MouseButtons.Left)
+            if (!TryGetSibling(selected, direction, out var sibling))
+                return;
+
+            if (direction < 0)
+                gameObjectManager.MoveGameObjectBefore(selected, sibling);
+            else
+                gameObjectManager.MoveGameObjectAfter(selected, sibling);
+        }
+
+        private int GetSiblingIndex(GameObject obj, out int siblingCount)
+        {
+            var siblings = GetSiblings(obj);
+
+            siblingCount = siblings.Count;
+            return siblings.IndexOf(obj);
+        }
+
+        private bool TryGetSibling(GameObject obj, int direction, out GameObject sibling)
+        {
+            sibling = null!;
+            var siblings = GetSiblings(obj);
+            int index = siblings.IndexOf(obj);
+            int targetIndex = index + direction;
+            if (index < 0 || targetIndex < 0 || targetIndex >= siblings.Count)
+                return false;
+
+            sibling = siblings[targetIndex];
+            return true;
+        }
+
+        private List<GameObject> GetSiblings(GameObject obj)
+        {
+            GameObject? parent = obj.transform.parent?.GameObject;
+            return gameObjectManager.gameObjects
+                .Where(go => go.transform.parent?.GameObject == parent)
+                .ToList();
+        }
+
+        private void TreeViewNodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
+        {
+            treeView.SelectedNode = e.Node;
+        }
+
+        private void TreeViewItemDrag(object? sender, ItemDragEventArgs e)
+        {
+            if (e.Item is TreeNode node && node.Tag is GameObject gameObject)
             {
-                dragSourceIndex = listBox.IndexFromPoint(e.Location);
-                dragStartPoint = e.Location;
+                treeView.DoDragDrop(gameObject, DragDropEffects.Move);
             }
         }
 
-        private void ListBoxMouseMove(object? sender, MouseEventArgs e)
-        {
-            if (e.Button != MouseButtons.Left)
-                return;
-
-            if (dragSourceIndex == ListBox.NoMatches)
-                return;
-
-            Size dragSize = SystemInformation.DragSize;
-            if (Math.Abs(e.X - dragStartPoint.X) < dragSize.Width &&
-                Math.Abs(e.Y - dragStartPoint.Y) < dragSize.Height)
-            {
-                return;
-            }
-
-            if (listBox.Items[dragSourceIndex] is GameObject gameObject)
-            {
-                listBox.DoDragDrop(gameObject, DragDropEffects.Move);
-            }
-
-            dragSourceIndex = ListBox.NoMatches;
-        }
-
-        private void ListBoxDragEnter(object? sender, DragEventArgs e)
+        private void TreeViewDragEnter(object? sender, DragEventArgs e)
         {
             if (e.Data != null && e.Data.GetDataPresent(typeof(GameObject)))
                 e.Effect = DragDropEffects.Move;
@@ -215,7 +317,7 @@ namespace GameEngine.Editor
                 e.Effect = DragDropEffects.None;
         }
 
-        private void ListBoxDragOver(object? sender, DragEventArgs e)
+        private void TreeViewDragOver(object? sender, DragEventArgs e)
         {
             if (e.Data == null || !e.Data.GetDataPresent(typeof(GameObject)))
             {
@@ -224,11 +326,9 @@ namespace GameEngine.Editor
             }
 
             var dragged = (GameObject)e.Data.GetData(typeof(GameObject))!;
-            Point clientPoint = listBox.PointToClient(new Point(e.X, e.Y));
-            int targetIndex = listBox.IndexFromPoint(clientPoint);
-            GameObject? target = targetIndex != ListBox.NoMatches
-                ? listBox.Items[targetIndex] as GameObject
-                : null;
+            Point clientPoint = treeView.PointToClient(new Point(e.X, e.Y));
+            TreeNode? targetNode = treeView.GetNodeAt(clientPoint);
+            GameObject? target = targetNode?.Tag as GameObject;
 
             if (!CanSetParent(dragged, target))
             {
@@ -236,58 +336,27 @@ namespace GameEngine.Editor
                 return;
             }
 
+            treeView.SelectedNode = targetNode;
             e.Effect = DragDropEffects.Move;
         }
 
-        private void ListBoxDragDrop(object? sender, DragEventArgs e)
+        private void TreeViewDragDrop(object? sender, DragEventArgs e)
         {
             if (e.Data == null || !e.Data.GetDataPresent(typeof(GameObject)))
                 return;
 
             var dragged = (GameObject)e.Data.GetData(typeof(GameObject))!;
-            Point clientPoint = listBox.PointToClient(new Point(e.X, e.Y));
-            int targetIndex = listBox.IndexFromPoint(clientPoint);
-            GameObject? target = targetIndex != ListBox.NoMatches
-                ? listBox.Items[targetIndex] as GameObject
-                : null;
+            Point clientPoint = treeView.PointToClient(new Point(e.X, e.Y));
+            TreeNode? targetNode = treeView.GetNodeAt(clientPoint);
+            GameObject? target = targetNode?.Tag as GameObject;
 
             if (!CanSetParent(dragged, target))
                 return;
 
             SetParent(dragged, target);
-        }
 
-        private void ListBoxDrawItem(object? sender, DrawItemEventArgs e)
-        {
-            if (e.Index < 0 || e.Index >= listBox.Items.Count)
-                return;
-
-            e.DrawBackground();
-
-            var gameObject = listBox.Items[e.Index] as GameObject;
-            if (gameObject == null)
-                return;
-
-            int depth = depthByObject.TryGetValue(gameObject, out int value) ? value : 0;
-            int indent = depth * 16;
-            var textBounds = new Rectangle(
-                e.Bounds.X + indent,
-                e.Bounds.Y,
-                e.Bounds.Width - indent,
-                e.Bounds.Height);
-
-            bool selected = (e.State & DrawItemState.Selected) == DrawItemState.Selected;
-            Color textColor = selected ? SystemColors.HighlightText : listBox.ForeColor;
-
-            TextRenderer.DrawText(
-                e.Graphics,
-                gameObject.name,
-                e.Font,
-                textBounds,
-                textColor,
-                TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
-
-            e.DrawFocusRectangle();
+            if (targetNode != null)
+                targetNode.Expand();
         }
 
         private bool CanSetParent(GameObject child, GameObject? newParent)
@@ -327,77 +396,6 @@ namespace GameEngine.Editor
             child.transform.WorldScale = worldScale;
 
             gameObjectManager.OnObjectChanged(child);
-            SetGameObjects(gameObjectManager.gameObjects);
-            listBox.SelectedItem = child;
-        }
-
-        private List<GameObject> BuildHierarchyList(IEnumerable<GameObject> objects)
-        {
-            var result = new List<GameObject>();
-            var allObjects = objects.ToList();
-            var objectSet = new HashSet<GameObject>(allObjects);
-            var rootObjects = new List<GameObject>();
-            var byParent = new Dictionary<GameObject, List<GameObject>>();
-
-            foreach (var obj in allObjects)
-            {
-                GameObject? parent = obj.transform.parent?.GameObject;
-                if (parent != null && !objectSet.Contains(parent))
-                    parent = null;
-
-                if (parent == null)
-                {
-                    rootObjects.Add(obj);
-                    continue;
-                }
-
-                if (!byParent.TryGetValue(parent, out var children))
-                {
-                    children = new List<GameObject>();
-                    byParent[parent] = children;
-                }
-
-                children.Add(obj);
-            }
-
-            var visited = new HashSet<GameObject>();
-
-            void AddChildren(GameObject parent, int depth)
-            {
-                if (!byParent.TryGetValue(parent, out var children))
-                    return;
-
-                foreach (var child in children)
-                {
-                    if (!visited.Add(child))
-                        continue;
-
-                    depthByObject[child] = depth;
-                    result.Add(child);
-                    AddChildren(child, depth + 1);
-                }
-            }
-
-            foreach (var root in rootObjects)
-            {
-                if (!visited.Add(root))
-                    continue;
-
-                depthByObject[root] = 0;
-                result.Add(root);
-                AddChildren(root, 1);
-            }
-
-            foreach (var obj in allObjects)
-            {
-                if (visited.Add(obj))
-                {
-                    depthByObject[obj] = 0;
-                    result.Add(obj);
-                }
-            }
-
-            return result;
         }
     }
 }

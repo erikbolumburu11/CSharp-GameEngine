@@ -10,6 +10,7 @@ namespace GameEngine.Engine
         public Transform transform;
 
         public event Action<GameObject>? Changed;
+        public event Action<GameObject>? HierarchyChanged;
 
         private List<Component> components;
         public IReadOnlyList<Component> Components => components;
@@ -41,6 +42,16 @@ namespace GameEngine.Engine
         {
             if(Id == Guid.Empty)
                 Id = Guid.NewGuid();
+        }
+
+        internal void NotifyChanged()
+        {
+            Changed?.Invoke(this);
+        }
+
+        internal void NotifyHierarchyChanged()
+        {
+            HierarchyChanged?.Invoke(this);
         }
 
         public void RegenerateId()
@@ -120,25 +131,25 @@ namespace GameEngine.Engine
         public void SetName(string name)
         {
             this.name = name;
-            Changed?.Invoke(this);
+            NotifyChanged();
         }
 
         public void SetPosition(Vector3 position)
         {
             transform.WorldPosition = position;
-            Changed?.Invoke(this);
+            NotifyChanged();
         }
 
         public void SetRotation(Quaternion rotation)
         {
             transform.WorldRotation = rotation;
-            Changed?.Invoke(this);
+            NotifyChanged();
         }
 
         public void SetScale(Vector3 scale)
         {
             transform.WorldScale = scale;
-            Changed?.Invoke(this);
+            NotifyChanged();
         }
 
         public override string ToString()

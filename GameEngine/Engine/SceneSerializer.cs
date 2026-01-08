@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Windows.Forms.Design;
 
 namespace GameEngine.Engine {
@@ -50,9 +51,25 @@ namespace GameEngine.Engine {
 
             gameObjectManager.Clear();
 
+            Dictionary<Guid, GameObject> map = new();
+
             foreach (var goDto in dto.GameObjects)
             {
-                var go = gameObjectManager.CreateGameObject(goDto.Name, goDto.id);
+                var go = gameObjectManager.CreateGameObject(goDto.Name, goDto.Id);
+                map[goDto.Id] = go;
+            }
+
+            foreach (var goDto in dto.GameObjects)
+            {
+                if (map.TryGetValue(goDto.Parent, out var parent))
+                {
+                    map[goDto.Id].transform.parent = parent.transform;
+                }
+            }
+
+            foreach (var goDto in dto.GameObjects)
+            {
+                var go = map[goDto.Id];
 
                 go.transform.WorldPosition = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
                 go.transform.WorldRotation = new Quaternion(
@@ -73,10 +90,14 @@ namespace GameEngine.Engine {
 
         private static GameObjectDto ToDto(GameObject gameObject)
         {
+            Guid parentGuid = Guid.Empty;
+            if(gameObject.transform.parent != null)
+                parentGuid = gameObject.transform.parent.GameObject.Id;
+
             var goDto = new GameObjectDto
             {
-                id = gameObject.Id,
-                parent = gameObject.transform.parent.GameObject.Id,
+                Id = gameObject.Id,
+                Parent = parentGuid,
                 Name = gameObject.name,
                 Transform = new TransformDto
                 {
@@ -155,8 +176,12 @@ namespace GameEngine.Engine {
 
     public sealed class GameObjectDto
     {
-        public Guid id;
-        public Guid parent;
+        [JsonPropertyName("id")]
+        public Guid Id { get; set; }
+
+        [JsonPropertyName("parent")]
+        public Guid Parent { get; set; }
+
         public string Name { get; set; } = "GameObject";
         public TransformDto Transform { get; set; } = new();
         public List<ComponentEntryDto> Components { get; set; } = new();
