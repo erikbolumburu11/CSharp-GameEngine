@@ -8,6 +8,16 @@ namespace GameEngine.Editor
     {
         TreeView treeView;
         readonly Dictionary<GameObject, TreeNode> nodesByObject = new();
+        TreeNode? dropTargetNode;
+        DropInsertMode? dropInsertMode;
+
+        enum DropInsertMode
+        {
+            Into,
+            Before,
+            After,
+            RootEnd
+        }
 
         public event Action<string>? GameObjectSelected;
         GameObjectManager gameObjectManager;
@@ -52,6 +62,7 @@ namespace GameEngine.Editor
                 Dock = DockStyle.Fill,
                 AllowDrop = true,
                 HideSelection = false,
+                DrawMode = TreeViewDrawMode.OwnerDrawText,
             };
 
             treeView.AfterSelect += (s, e) =>
@@ -60,7 +71,9 @@ namespace GameEngine.Editor
             };
             treeView.NodeMouseClick += TreeViewNodeMouseClick;
             treeView.ItemDrag += TreeViewItemDrag;
+            treeView.DrawNode += TreeViewDrawNode;
             treeView.DragEnter += TreeViewDragEnter;
+            treeView.DragLeave += TreeViewDragLeave;
             treeView.DragOver += TreeViewDragOver;
             treeView.DragDrop += TreeViewDragDrop;
 
@@ -269,7 +282,7 @@ namespace GameEngine.Editor
 
         private int GetSiblingIndex(GameObject obj, out int siblingCount)
         {
-            var siblings = GetSiblings(obj);
+            var siblings = GetSiblings(obj.transform.parent?.GameObject);
 
             siblingCount = siblings.Count;
             return siblings.IndexOf(obj);
@@ -278,7 +291,7 @@ namespace GameEngine.Editor
         private bool TryGetSibling(GameObject obj, int direction, out GameObject sibling)
         {
             sibling = null!;
-            var siblings = GetSiblings(obj);
+            var siblings = GetSiblings(obj.transform.parent?.GameObject);
             int index = siblings.IndexOf(obj);
             int targetIndex = index + direction;
             if (index < 0 || targetIndex < 0 || targetIndex >= siblings.Count)
@@ -288,9 +301,8 @@ namespace GameEngine.Editor
             return true;
         }
 
-        private List<GameObject> GetSiblings(GameObject obj)
+        private List<GameObject> GetSiblings(GameObject? parent)
         {
-            GameObject? parent = obj.transform.parent?.GameObject;
             return gameObjectManager.gameObjects
                 .Where(go => go.transform.parent?.GameObject == parent)
                 .ToList();
@@ -317,6 +329,11 @@ namespace GameEngine.Editor
                 e.Effect = DragDropEffects.None;
         }
 
+        private void TreeViewDragLeave(object? sender, EventArgs e)
+        {
+            ClearDropIndicator();
+        }
+
         private void TreeViewDragOver(object? sender, DragEventArgs e)
         {
             if (e.Data == null || !e.Data.GetDataPresent(typeof(GameObject)))
@@ -327,16 +344,15 @@ namespace GameEngine.Editor
 
             var dragged = (GameObject)e.Data.GetData(typeof(GameObject))!;
             Point clientPoint = treeView.PointToClient(new Point(e.X, e.Y));
-            TreeNode? targetNode = treeView.GetNodeAt(clientPoint);
-            GameObject? target = targetNode?.Tag as GameObject;
 
-            if (!CanSetParent(dragged, target))
+            if (!TryGetDropInfo(clientPoint, dragged, out var target, out _, out var mode))
             {
+                ClearDropIndicator();
                 e.Effect = DragDropEffects.None;
                 return;
             }
 
-            treeView.SelectedNode = targetNode;
+            UpdateDropIndicator(target, mode);
             e.Effect = DragDropEffects.Move;
         }
 
@@ -347,16 +363,167 @@ namespace GameEngine.Editor
 
             var dragged = (GameObject)e.Data.GetData(typeof(GameObject))!;
             Point clientPoint = treeView.PointToClient(new Point(e.X, e.Y));
-            TreeNode? targetNode = treeView.GetNodeAt(clientPoint);
-            GameObject? target = targetNode?.Tag as GameObject;
+            if (!TryGetDropInfo(clientPoint, dragged, out var target, out var newParent, out var mode))
+            {
+                ClearDropIndicator();
+                return;
+            }
 
-            if (!CanSetParent(dragged, target))
+            ClearDropIndicator();
+
+            GameObject? currentParent = dragged.transform.parent?.GameObject;
+            if (mode == DropInsertMode.Into)
+            {
+                SetParent(dragged, newParent);
+                return;
+            }
+
+            if (mode == DropInsertMode.RootEnd)
+            {
+                if (currentParent != null)
+                    SetParent(dragged, null);
+
+                var rootSiblings = GetSiblings(null);
+                if (rootSiblings.Count > 0)
+                {
+                    var lastRoot = rootSiblings[^1];
+                    if (lastRoot != dragged)
+                        gameObjectManager.MoveGameObjectAfter(dragged, lastRoot);
+                }
+
+                return;
+            }
+
+            if (newParent != currentParent)
+                SetParent(dragged, newParent);
+
+            if (mode == DropInsertMode.Before)
+                gameObjectManager.MoveGameObjectBefore(dragged, target!);
+            else
+                gameObjectManager.MoveGameObjectAfter(dragged, target!);
+        }
+
+        private void TreeViewDrawNode(object? sender, DrawTreeNodeEventArgs e)
+        {
+            if (dropTargetNode == null || dropInsertMode == null)
+            {
+                e.DrawDefault = true;
+                return;
+            }
+
+            if (e.Node != dropTargetNode)
+            {
+                e.DrawDefault = true;
+                return;
+            }
+
+            if (dropInsertMode == DropInsertMode.Into)
+            {
+                bool isSelected = (e.State & TreeNodeStates.Selected) == TreeNodeStates.Selected;
+                Color backColor = isSelected ? SystemColors.Highlight : SystemColors.ControlLight;
+                Color textColor = isSelected ? SystemColors.HighlightText : treeView.ForeColor;
+
+                using var background = new SolidBrush(backColor);
+                e.Graphics.FillRectangle(background, e.Bounds);
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    e.Node.Text,
+                    e.Node.NodeFont ?? treeView.Font,
+                    e.Bounds,
+                    textColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                return;
+            }
+
+            if (dropInsertMode == DropInsertMode.Before || dropInsertMode == DropInsertMode.After)
+            {
+                bool isSelected = (e.State & TreeNodeStates.Selected) == TreeNodeStates.Selected;
+                Color backColor = isSelected ? SystemColors.Highlight : treeView.BackColor;
+                Color textColor = isSelected ? SystemColors.HighlightText : treeView.ForeColor;
+
+                using var background = new SolidBrush(backColor);
+                e.Graphics.FillRectangle(background, e.Bounds);
+                TextRenderer.DrawText(
+                    e.Graphics,
+                    e.Node.Text,
+                    e.Node.NodeFont ?? treeView.Font,
+                    e.Bounds,
+                    textColor,
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+
+                Rectangle bounds = e.Bounds;
+                int y = dropInsertMode == DropInsertMode.Before ? bounds.Top : bounds.Bottom - 1;
+                int left = bounds.Left;
+                int right = treeView.ClientRectangle.Right - 1;
+
+                using var pen = new Pen(SystemColors.Highlight, 4);
+                e.Graphics.DrawLine(pen, left, y, right, y);
+                return;
+            }
+
+            e.DrawDefault = true;
+        }
+
+        private void UpdateDropIndicator(GameObject? target, DropInsertMode mode)
+        {
+            TreeNode? nextNode = null;
+            if (target != null)
+                nodesByObject.TryGetValue(target, out nextNode);
+
+            if (dropTargetNode == nextNode && dropInsertMode == mode)
                 return;
 
-            SetParent(dragged, target);
+            dropTargetNode = nextNode;
+            dropInsertMode = mode;
+            treeView.Invalidate();
+        }
 
-            if (targetNode != null)
-                targetNode.Expand();
+        private void ClearDropIndicator()
+        {
+            if (dropTargetNode == null && dropInsertMode == null)
+                return;
+
+            dropTargetNode = null;
+            dropInsertMode = null;
+            treeView.Invalidate();
+        }
+
+        private bool TryGetDropInfo(Point clientPoint, GameObject dragged, out GameObject? target, out GameObject? newParent, out DropInsertMode mode)
+        {
+            var hit = treeView.HitTest(clientPoint);
+            target = hit.Node?.Tag as GameObject;
+
+            if (hit.Node == null)
+            {
+                newParent = null;
+                mode = DropInsertMode.RootEnd;
+                return CanSetParent(dragged, null);
+            }
+
+            if (target == dragged)
+            {
+                newParent = null;
+                mode = DropInsertMode.Into;
+                return false;
+            }
+
+            Rectangle bounds = hit.Node.Bounds;
+            int height = Math.Max(1, bounds.Height);
+            int offsetY = clientPoint.Y - bounds.Top;
+            int threshold = Math.Max(1, height / 4);
+            bool isAbove = offsetY < threshold;
+            bool isBelow = offsetY > height - threshold;
+
+            if (isAbove || isBelow)
+            {
+                newParent = hit.Node.Parent?.Tag as GameObject;
+                mode = isAbove ? DropInsertMode.Before : DropInsertMode.After;
+                return CanSetParent(dragged, newParent);
+            }
+
+            newParent = target;
+            mode = DropInsertMode.Into;
+            return CanSetParent(dragged, newParent);
         }
 
         private bool CanSetParent(GameObject child, GameObject? newParent)
