@@ -53,14 +53,14 @@ namespace GameEngine.Engine {
             {
                 var go = gameObjectManager.CreateGameObject(goDto.Name);
 
-                go.transform.position = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
-                go.transform.rotation = new Quaternion(
+                go.transform.WorldPosition = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
+                go.transform.WorldRotation = new Quaternion(
                     goDto.Transform.RotationX,
                     goDto.Transform.RotationY,
                     goDto.Transform.RotationZ,
                     goDto.Transform.RotationW
                 );
-                go.transform.scale    = new Vector3(goDto.Transform.ScaleX, goDto.Transform.ScaleY, goDto.Transform.ScaleZ);
+                go.transform.WorldScale = new Vector3(goDto.Transform.ScaleX, goDto.Transform.ScaleY, goDto.Transform.ScaleZ);
 
                 DeserializeComponents(go, goDto.Components);
             }
@@ -77,18 +77,18 @@ namespace GameEngine.Engine {
                 Name = gameObject.name,
                 Transform = new TransformDto
                 {
-                    PositionX = gameObject.transform.position.X,
-                    PositionY = gameObject.transform.position.Y,
-                    PositionZ = gameObject.transform.position.Z,
+                    PositionX = gameObject.transform.WorldPosition.X,
+                    PositionY = gameObject.transform.WorldPosition.Y,
+                    PositionZ = gameObject.transform.WorldPosition.Z,
 
-                    RotationX = gameObject.transform.rotation.X,
-                    RotationY = gameObject.transform.rotation.Y,
-                    RotationZ = gameObject.transform.rotation.Z,
-                    RotationW = gameObject.transform.rotation.W,
+                    RotationX = gameObject.transform.WorldRotation.X,
+                    RotationY = gameObject.transform.WorldRotation.Y,
+                    RotationZ = gameObject.transform.WorldRotation.Z,
+                    RotationW = gameObject.transform.WorldRotation.W,
 
-                    ScaleX = gameObject.transform.scale.X,
-                    ScaleY = gameObject.transform.scale.Y,
-                    ScaleZ = gameObject.transform.scale.Z,
+                    ScaleX = gameObject.transform.WorldScale.X,
+                    ScaleY = gameObject.transform.WorldScale.Y,
+                    ScaleZ = gameObject.transform.WorldScale.Z,
                 }
             };
 

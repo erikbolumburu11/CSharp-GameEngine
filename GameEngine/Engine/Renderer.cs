@@ -33,7 +33,7 @@ namespace GameEngine.Engine
             bool hasShadowPass = dirLight != null;
             if (dirLight != null)
             {
-                Vector3 lightDir = Vector3.Transform(-Vector3.UnitZ, dirLight.gameObject.transform.rotation).Normalized();
+                Vector3 lightDir = Vector3.Transform(-Vector3.UnitZ, dirLight.gameObject.transform.WorldRotation).Normalized();
                 Vector3 sceneCenter = Vector3.Zero;
                 lightSpaceMatrix = CreateDirectionalLightSpaceMatrix(lightDir, sceneCenter);
 
@@ -127,9 +127,9 @@ namespace GameEngine.Engine
 
         Matrix4 CreateModelMatrix(Transform transform)
         {
-            Matrix4 translation = Matrix4.CreateTranslation(transform.position);
-            Matrix4 rotation = Matrix4.CreateFromQuaternion(transform.rotation);
-            Matrix4 scale = Matrix4.CreateScale(transform.scale);
+            Matrix4 translation = Matrix4.CreateTranslation(transform.WorldPosition);
+            Matrix4 rotation = Matrix4.CreateFromQuaternion(transform.WorldRotation);
+            Matrix4 scale = Matrix4.CreateScale(transform.WorldScale);
 
             return scale * rotation * translation;
         }

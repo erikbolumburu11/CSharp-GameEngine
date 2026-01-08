@@ -2,20 +2,6 @@
 
 namespace GameEngine.Engine
 {
-    public class Transform
-    {
-        public Vector3 position;
-        public Vector3 scale;
-        public Quaternion rotation;
-
-        public Transform()
-        {
-            position = Vector3.Zero;
-            scale = new Vector3(1, 1, 1);
-            rotation = Quaternion.Identity;
-        }
-    }
-
     public class GameObject
     {
         public string name { get; private set; }
@@ -33,7 +19,7 @@ namespace GameEngine.Engine
 
             this.name = name;
 
-            transform = new();
+            transform = new(this);
         }
 
         public Component? AddComponent(Component component)
@@ -113,19 +99,19 @@ namespace GameEngine.Engine
 
         public void SetPosition(Vector3 position)
         {
-            transform.position = position;
+            transform.WorldPosition = position;
             Changed?.Invoke(this);
         }
 
         public void SetRotation(Quaternion rotation)
         {
-            transform.rotation = rotation;
+            transform.WorldRotation = rotation;
             Changed?.Invoke(this);
         }
 
         public void SetScale(Vector3 scale)
         {
-            transform.scale = scale;
+            transform.WorldScale = scale;
             Changed?.Invoke(this);
         }
 

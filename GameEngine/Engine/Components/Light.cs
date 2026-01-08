@@ -62,14 +62,14 @@ namespace GameEngine.Engine.Components
 
         public LightData ToLightData()
         {
-            Vector3 dir = Vector3.Transform(-Vector3.UnitZ, gameObject.transform.rotation);
+            Vector3 dir = Vector3.Transform(-Vector3.UnitZ, gameObject.transform.WorldRotation);
             if (dir.LengthSquared > 0) dir = dir.Normalized();
 
             float packedRadius = (type == LightType.Point) ? radius : 0f;
 
             return new LightData
             {
-                positionIntensity = new Vector4(gameObject.transform.position, intensity / 100f),
+                positionIntensity = new Vector4(gameObject.transform.WorldPosition, intensity / 100f),
                 colorRadius       = new Vector4(color / 255f, packedRadius),
                 directionType     = new Vector4(dir, (float)type),
                 specularPadding   = new Vector4(specularStrength, 0f, 0f, 0f)

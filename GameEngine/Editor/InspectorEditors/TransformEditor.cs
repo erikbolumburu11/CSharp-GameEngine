@@ -13,8 +13,8 @@ namespace GameEngine.Editor
             {
                 label = "Position",
                 valueType = typeof(Vector3),
-                getValue = () => gameObject.transform.position,
-                setValue = value => gameObject.transform.position = (Vector3)value
+                getValue = () => gameObject.transform.WorldPosition,
+                setValue = value => gameObject.transform.WorldPosition = (Vector3)value
             }
             );
 
@@ -22,7 +22,7 @@ namespace GameEngine.Editor
             {
                 label = "Rotation",
                 valueType = typeof(Vector3),
-                getValue = () => QuaternionToEulerDegrees(gameObject.transform.rotation),
+                getValue = () => QuaternionToEulerDegrees(gameObject.transform.WorldRotation),
                 setValue = value =>
                 {
                     gameObject.SetRotation(
@@ -38,8 +38,8 @@ namespace GameEngine.Editor
             {
                 label = "Scale",
                 valueType = typeof(Vector3),
-                getValue = () => gameObject.transform.scale,
-                setValue = value => gameObject.transform.scale = (Vector3)value
+                getValue = () => gameObject.transform.WorldScale,
+                setValue = value => gameObject.transform.WorldScale = (Vector3)value
             }
             );
         }
