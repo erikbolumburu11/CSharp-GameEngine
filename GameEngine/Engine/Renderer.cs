@@ -107,7 +107,6 @@ namespace GameEngine.Engine
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
-
                 Material material = materialManager.Get(meshRenderer.material);
 
                 shader.SetVector2("uvTiling", material.uvTiling);

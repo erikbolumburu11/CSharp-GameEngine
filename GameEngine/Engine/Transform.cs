@@ -24,7 +24,7 @@ namespace GameEngine.Engine
                 if (parent == null)
                     return LocalMatrix;
 
-                return LocalMatrix * parent.WorldMatrix; // or parent * local, per convention
+                return LocalMatrix * parent.WorldMatrix; 
             }
         }
 

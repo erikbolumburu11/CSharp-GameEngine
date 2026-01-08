@@ -4,6 +4,7 @@ namespace GameEngine.Engine
 {
     public class GameObject
     {
+        public Guid Id { get; private set; } = Guid.Empty;
         public string name { get; private set; }
 
         public Transform transform;
@@ -13,6 +14,18 @@ namespace GameEngine.Engine
         private List<Component> components;
         public IReadOnlyList<Component> Components => components;
 
+        public GameObject(string name, Guid id)
+        {
+            Id = id;
+            components = new();
+
+            this.name = name;
+
+            transform = new(this);
+
+            EnsureId();
+        }
+
         public GameObject(string name)
         {
             components = new();
@@ -20,6 +33,19 @@ namespace GameEngine.Engine
             this.name = name;
 
             transform = new(this);
+
+            EnsureId();
+        }
+
+        private void EnsureId()
+        {
+            if(Id == Guid.Empty)
+                Id = Guid.NewGuid();
+        }
+
+        public void RegenerateId()
+        {
+            Id = Guid.NewGuid();
         }
 
         public Component? AddComponent(Component component)

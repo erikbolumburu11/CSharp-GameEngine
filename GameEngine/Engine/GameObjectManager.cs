@@ -29,6 +29,15 @@ namespace GameEngine.Engine
             return gameObject;
         }
 
+        public GameObject CreateGameObject(string name, Guid id)
+        {
+            GameObject gameObject = new GameObject(name, id);
+            gameObjects.Add(gameObject);
+            GameObjectAdded?.Invoke(gameObject);
+            gameObject.Changed += OnObjectChanged;
+            return gameObject;
+        }
+
         public GameObject CreateCube()
         {
             GameObject cube = CreateGameObject("Cube");

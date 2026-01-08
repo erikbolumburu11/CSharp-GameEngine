@@ -1,5 +1,6 @@
 ﻿using OpenTK.Mathematics;
 using System.Text.Json;
+using System.Windows.Forms.Design;
 
 namespace GameEngine.Engine {
     public static class SceneSerializer
@@ -51,7 +52,7 @@ namespace GameEngine.Engine {
 
             foreach (var goDto in dto.GameObjects)
             {
-                var go = gameObjectManager.CreateGameObject(goDto.Name);
+                var go = gameObjectManager.CreateGameObject(goDto.Name, goDto.id);
 
                 go.transform.WorldPosition = new Vector3(goDto.Transform.PositionX, goDto.Transform.PositionY, goDto.Transform.PositionZ);
                 go.transform.WorldRotation = new Quaternion(
@@ -74,6 +75,8 @@ namespace GameEngine.Engine {
         {
             var goDto = new GameObjectDto
             {
+                id = gameObject.Id,
+                parent = gameObject.transform.parent.GameObject.Id,
                 Name = gameObject.name,
                 Transform = new TransformDto
                 {
@@ -132,7 +135,6 @@ namespace GameEngine.Engine {
                                 ?? throw new InvalidOperationException($"Invalid component data for '{entry.Type}'.");
 
                 ComponentDtoRegistry.FromDto(comp, entry.Type, dtoObj);
-
                 gameObject.AddComponent(comp);
             }
         }
@@ -153,6 +155,8 @@ namespace GameEngine.Engine {
 
     public sealed class GameObjectDto
     {
+        public Guid id;
+        public Guid parent;
         public string Name { get; set; } = "GameObject";
         public TransformDto Transform { get; set; } = new();
         public List<ComponentEntryDto> Components { get; set; } = new();
