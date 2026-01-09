@@ -44,7 +44,7 @@ namespace GameEngine.Editor
             if (ofd.ShowDialog(owner) != DialogResult.OK)
                 return null;
 
-            var project = Project.Open(editorState.engineHost.game, ofd.FileName);
+            var project = Project.Open(editorState.engineHost, ofd.FileName);
             ProjectContext.Set(project);
             return project;
         }

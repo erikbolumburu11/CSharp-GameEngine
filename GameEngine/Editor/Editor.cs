@@ -38,10 +38,10 @@ namespace GameEngine.Editor
             camera = new EditorCamera(new Vector3(0, 0, 6), 0.5f, 1.5f, inputHandler, sceneView.Width, sceneView.Height);
             editorState = new();
 
-            objectHierarchy = new ObjectHierarchy(editorState.engineHost.game.gameObjectManager, editorState);
+            objectHierarchy = new ObjectHierarchy(editorState.engineHost.gameObjectManager, editorState);
             objectHierarchy.Show(dockPanel, DockState.DockLeft);
 
-            inspector = new Inspector(editorState, editorState.engineHost.game.gameObjectManager);
+            inspector = new Inspector(editorState, editorState.engineHost.gameObjectManager);
             inspector.Show(dockPanel, DockState.DockRight);
 
             materialEditor = new MaterialEditor(editorState);
@@ -167,7 +167,7 @@ namespace GameEngine.Editor
 
             SceneSerializer.SaveScene
             (
-                editorState.engineHost.game.gameObjectManager,
+                editorState.engineHost.gameObjectManager,
                 editorState.engineHost.game.scene,
                 relPath,
                 true

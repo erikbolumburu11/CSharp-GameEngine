@@ -72,7 +72,7 @@ namespace GameEngine.Engine
             return new Project(projectName, projectFilePath, root, dto.assetRoot!, dto.startScene);
         }
 
-        public static Project Open(Game game, string projectFilePath)
+        public static Project Open(EngineHost engineHost, string projectFilePath)
         {
             if (string.IsNullOrWhiteSpace(projectFilePath))
                 throw new ArgumentException("Project file path is empty.", nameof(projectFilePath));
@@ -94,8 +94,8 @@ namespace GameEngine.Engine
 
             SceneSerializer.LoadScene
             (
-                game.gameObjectManager,
-                game.scene,
+                engineHost.gameObjectManager,
+                engineHost.game.scene,
                 Path.Combine(root, dto.startScene)
             );
 

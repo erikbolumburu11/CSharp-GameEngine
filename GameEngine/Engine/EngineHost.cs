@@ -11,6 +11,7 @@ namespace GameEngine.Engine
         public TextureManager textureManager { get; private set; }
         public ShaderManager shaderManager { get; private set; }
         public MaterialManager materialManager { get; private set; }
+        public GameObjectManager gameObjectManager { get; private set; }
 
         public Game game;
 
@@ -24,6 +25,7 @@ namespace GameEngine.Engine
 
             textureManager = new TextureManager();
             shaderManager = new ShaderManager();
+            gameObjectManager = new GameObjectManager();
             materialManager = new MaterialManager();
             renderer = new Renderer();
         }
@@ -55,7 +57,7 @@ namespace GameEngine.Engine
                 materialManager, 
                 textureManager,
                 shaderManager,
-                game.gameObjectManager,
+                gameObjectManager,
                 lightManager,
                 game.scene,
                 camera
@@ -64,7 +66,7 @@ namespace GameEngine.Engine
 
         public void Update(float deltaTime)
         {
-            foreach (GameObject gameObject in game.gameObjectManager.gameObjects)
+            foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
                 foreach (var component in gameObject.Components)
                 {
