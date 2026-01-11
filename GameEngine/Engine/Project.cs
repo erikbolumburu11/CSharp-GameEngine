@@ -91,6 +91,8 @@ namespace GameEngine.Engine
                 : dto.name;
 
             string assetRoot = string.IsNullOrWhiteSpace(dto.assetRoot) ? "Assets" : dto.assetRoot;
+            string assetRootAbs = Path.GetFullPath(Path.Combine(root, assetRoot));
+            AssetDatabase.ScanAssets(assetRootAbs);
 
             SceneSerializer.LoadScene
             (

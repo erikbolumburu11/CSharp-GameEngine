@@ -5,8 +5,8 @@ namespace GameEngine.Engine
 {
     public record MaterialDto
     (
-        string diffuseTex,
-        string specularTex,
+        Guid? diffuseTexGuid,
+        Guid? specularTexGuid,
         float[] uvTiling,
         float[] uvOffset
     );
@@ -15,96 +15,56 @@ namespace GameEngine.Engine
     {
         public string relPath;
 
-        public string? diffuseTex;
-        public string? specularTex;
+        public Guid? diffuseTexGuid;
+        public Guid? specularTexGuid;
 
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
 
-        private static bool TryGetBuiltInTexture(TextureManager textureManager, string? textureId, out Texture texture)
-        {
-            if (string.IsNullOrWhiteSpace(textureId))
-            {
-                texture = textureManager.White;
-                return false;
-            }
-
-            string normalized = textureId.Trim();
-            if (string.Equals(normalized, "White", StringComparison.OrdinalIgnoreCase))
-            {
-                texture = textureManager.White;
-                return true;
-            }
-
-            if (string.Equals(normalized, "Gray", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(normalized, "Grey", StringComparison.OrdinalIgnoreCase))
-            {
-                texture = textureManager.Grey;
-                return true;
-            }
-
-            if (string.Equals(normalized, "Black", StringComparison.OrdinalIgnoreCase))
-            {
-                texture = textureManager.Black;
-                return true;
-            }
-
-            texture = textureManager.White;
-            return false;
-        }
-
         public Texture GetDiffuse(TextureManager textureManager)
         {
-            if (TryGetBuiltInTexture(textureManager, diffuseTex, out var builtIn))
-                return builtIn;
-
-            if (string.IsNullOrWhiteSpace(diffuseTex) || ProjectContext.Current == null)
+            if (diffuseTexGuid is null || diffuseTexGuid.Value == Guid.Empty)
                 return textureManager.White;
 
-            string absPath = ProjectContext.Current.Paths.ToAbsolute(diffuseTex);
-            if (!File.Exists(absPath))
-            {
-                diffuseTex = null;
-                if (!string.IsNullOrWhiteSpace(relPath))
-                    MaterialSerializer.SaveMaterial(this, relPath);
-                return textureManager.White;
-            }
+            if (AssetDatabase.TryLoad<Texture>(diffuseTexGuid.Value, out var tex) && tex != null)
+                return tex;
 
-            return textureManager.Get(diffuseTex) ?? textureManager.White;
+            diffuseTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.White;
         }
 
         public Texture GetSpecular(TextureManager textureManager)
         {
-            if (TryGetBuiltInTexture(textureManager, specularTex, out var builtIn))
-                return builtIn;
+            if (specularTexGuid is null || specularTexGuid.Value == Guid.Empty)
+                return textureManager.Black;
 
-            if (string.IsNullOrWhiteSpace(specularTex) || ProjectContext.Current == null)
-                return textureManager.Grey;
+            if (AssetDatabase.TryLoad<Texture>(specularTexGuid.Value, out var tex) && tex != null)
+                return tex;
 
-            string absPath = ProjectContext.Current.Paths.ToAbsolute(specularTex);
-            if (!File.Exists(absPath))
-            {
-                specularTex = null;
-                if (!string.IsNullOrWhiteSpace(relPath))
-                    MaterialSerializer.SaveMaterial(this, relPath);
-                return textureManager.Grey;
-            }
+            specularTexGuid = null;
 
-            return textureManager.Get(specularTex) ?? textureManager.Grey;
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.Black;
         }
 
         public MaterialDto ToDto() => new
         (
-            diffuseTex: diffuseTex,
-            specularTex: specularTex,
+            diffuseTexGuid: diffuseTexGuid,
+            specularTexGuid: specularTexGuid,
             uvTiling: new[] { uvTiling.X, uvTiling.Y },
             uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
 
         public void FromDto(MaterialDto dto)
         {
-            diffuseTex = dto.diffuseTex;
-            specularTex = dto.specularTex;
+            diffuseTexGuid = dto.diffuseTexGuid;
+            specularTexGuid = dto.specularTexGuid;
 
             if (dto.uvTiling is { Length: >= 2 })
                 uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);

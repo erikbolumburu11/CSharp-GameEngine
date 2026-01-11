@@ -22,6 +22,18 @@ namespace GameEngine.Editor
         private string? currentMaterialPath;
         private const string NoTextureLabel = "(None)";
         private static readonly string[] BuiltInTextureLabels = { "White", "Gray", "Black" };
+        private static readonly Dictionary<string, Guid> BuiltInTextureGuids = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["White"] = BuiltInGuids.WhiteTexture,
+            ["Gray"] = BuiltInGuids.GreyTexture,
+            ["Black"] = BuiltInGuids.BlackTexture
+        };
+        private static readonly Dictionary<Guid, string> BuiltInTextureLabelsByGuid = new()
+        {
+            [BuiltInGuids.WhiteTexture] = "White",
+            [BuiltInGuids.GreyTexture] = "Gray",
+            [BuiltInGuids.BlackTexture] = "Black"
+        };
         private static readonly HashSet<string> TextureExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".png",
@@ -408,10 +420,13 @@ namespace GameEngine.Editor
             }
 
             currentMaterialPath = relPath;
-            currentMaterial = editorState.engineHost.materialManager.Get(relPath);
+            if (TryGetGuidFromPath(relPath, out var guid))
+                currentMaterial = editorState.engineHost.materialManager.Get(guid);
+            else
+                currentMaterial = MaterialSerializer.LoadMaterial(relPath);
             RefreshTextureLists();
-            SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTex);
-            SetTextureSelection(specularTextureComboBox, currentMaterial.specularTex);
+            SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTexGuid);
+            SetTextureSelection(specularTextureComboBox, currentMaterial.specularTexGuid);
         }
 
         private void OnDiffuseTextureSelectionChanged(object? sender, EventArgs e)
@@ -419,7 +434,7 @@ namespace GameEngine.Editor
             if (!TryGetCurrentMaterial(out var material, out var path))
                 return;
 
-            material.diffuseTex = GetSelectedTexture(diffuseTextureComboBox);
+            material.diffuseTexGuid = GetSelectedTexture(diffuseTextureComboBox);
             MaterialSerializer.SaveMaterial(material, path);
         }
 
@@ -432,9 +447,21 @@ namespace GameEngine.Editor
             if (string.IsNullOrWhiteSpace(relPath))
                 return;
 
-            material.diffuseTex = relPath;
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.diffuseTexGuid = guid;
             MaterialSerializer.SaveMaterial(material, path);
-            SetTextureSelection(diffuseTextureComboBox, relPath);
+            SetTextureSelection(diffuseTextureComboBox, guid);
         }
 
         private void OnSpecularTextureSelectionChanged(object? sender, EventArgs e)
@@ -442,7 +469,7 @@ namespace GameEngine.Editor
             if (!TryGetCurrentMaterial(out var material, out var path))
                 return;
 
-            material.specularTex = GetSelectedTexture(specularTextureComboBox);
+            material.specularTexGuid = GetSelectedTexture(specularTextureComboBox);
             MaterialSerializer.SaveMaterial(material, path);
         }
 
@@ -455,9 +482,21 @@ namespace GameEngine.Editor
             if (string.IsNullOrWhiteSpace(relPath))
                 return;
 
-            material.specularTex = relPath;
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.specularTexGuid = guid;
             MaterialSerializer.SaveMaterial(material, path);
-            SetTextureSelection(specularTextureComboBox, relPath);
+            SetTextureSelection(specularTextureComboBox, guid);
         }
 
         public void RefreshMaterialListFromEditor()
@@ -508,8 +547,8 @@ namespace GameEngine.Editor
 
             if (currentMaterial != null)
             {
-                SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTex);
-                SetTextureSelection(specularTextureComboBox, currentMaterial.specularTex);
+                SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTexGuid);
+                SetTextureSelection(specularTextureComboBox, currentMaterial.specularTexGuid);
                 SetUvControlsEnabled(true);
                 SetUvValues(currentMaterial.uvTiling, currentMaterial.uvOffset);
             }
@@ -599,9 +638,26 @@ namespace GameEngine.Editor
             }
         }
 
-        private void SetTextureSelection(ComboBox combo, string? relPath)
+        private void SetTextureSelection(ComboBox combo, Guid? textureGuid)
         {
-            string selection = string.IsNullOrWhiteSpace(relPath) ? NoTextureLabel : relPath;
+            string selection = NoTextureLabel;
+
+            if (textureGuid.HasValue && textureGuid.Value != Guid.Empty)
+            {
+                if (BuiltInTextureLabelsByGuid.TryGetValue(textureGuid.Value, out var builtInLabel))
+                {
+                    selection = builtInLabel;
+                }
+                else if (TryGetPathFromGuid(textureGuid.Value, out var path))
+                {
+                    selection = NormalizeTexturePathForDisplay(path);
+                }
+                else
+                {
+                    selection = textureGuid.Value.ToString();
+                }
+            }
+
             int index = combo.Items.IndexOf(selection);
             if (index >= 0)
             {
@@ -613,16 +669,104 @@ namespace GameEngine.Editor
             combo.SelectedItem = selection;
         }
 
-        private string? GetSelectedTexture(ComboBox combo)
+        private Guid? GetSelectedTexture(ComboBox combo)
         {
             if (combo.SelectedItem is string selected)
             {
                 if (string.Equals(selected, NoTextureLabel, StringComparison.Ordinal))
                     return null;
-                return selected;
+
+                if (BuiltInTextureGuids.TryGetValue(selected, out var builtIn))
+                    return builtIn;
+
+                if (TryGetGuidFromPath(selected, out var guid))
+                    return guid;
+
+                if (Guid.TryParse(selected, out var parsed))
+                    return parsed;
             }
 
             return null;
+        }
+
+        private static string NormalizeTexturePathForDisplay(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return path;
+
+            string normalized = path.Replace('\\', '/').Trim();
+            if (normalized.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
+                return normalized;
+
+            if (ProjectContext.Current == null)
+                return normalized;
+
+            try
+            {
+                return ProjectContext.Current.Paths.ToProjectRelative(path);
+            }
+            catch
+            {
+                return normalized;
+            }
+        }
+
+        private static bool TryGetGuidFromPath(string path, out Guid guid)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                guid = default;
+                return false;
+            }
+
+            if (TryGetGuidByLookup(path, out guid))
+                return true;
+
+            string altPath = path.Replace('/', '\\');
+            if (!string.Equals(altPath, path, StringComparison.Ordinal) && TryGetGuidByLookup(altPath, out guid))
+                return true;
+
+            if (!Path.IsPathRooted(path) && ProjectContext.Current != null)
+            {
+                string absPath = ProjectContext.Current.Paths.ToAbsolute(path);
+                if (TryGetGuidByLookup(absPath, out guid))
+                    return true;
+
+                string altAbsPath = absPath.Replace('/', '\\');
+                if (!string.Equals(altAbsPath, absPath, StringComparison.Ordinal) && TryGetGuidByLookup(altAbsPath, out guid))
+                    return true;
+            }
+
+            guid = default;
+            return false;
+        }
+
+        private static bool TryGetGuidByLookup(string path, out Guid guid)
+        {
+            try
+            {
+                guid = AssetDatabase.PathToGuid(path);
+                return true;
+            }
+            catch
+            {
+                guid = default;
+                return false;
+            }
+        }
+
+        private static bool TryGetPathFromGuid(Guid guid, out string path)
+        {
+            try
+            {
+                path = AssetDatabase.GuidToPath(guid);
+                return true;
+            }
+            catch
+            {
+                path = string.Empty;
+                return false;
+            }
         }
 
         private void OnUvTilingChanged()

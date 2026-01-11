@@ -16,27 +16,33 @@ namespace GameEngine.Engine
             defaultMat = new Material();
         }
 
-        public Material Get(string? path)
+        public Material Get(Guid guid)
         {
-            if (string.IsNullOrWhiteSpace(path)) return defaultMat;
+            if (guid == Guid.Empty) return defaultMat;
 
-            string relPath = path;
-            if (Path.IsPathRooted(relPath))
-            {
-                if (ProjectContext.Current == null)
-                    throw new InvalidOperationException("Cannot resolve material path without an active project.");
-
-                relPath = ProjectContext.Current.Paths.ToProjectRelative(relPath);
+            if(AssetDatabase.TryLoad(guid, out Material mat)){
+                return mat;
             }
 
-            relPath = NormalizeRelPath(relPath);
+            return defaultMat;
 
-            if (materials.TryGetValue(relPath, out var mat))
-                return mat;
+            // string relPath = path;
+            // if (Path.IsPathRooted(relPath))
+            // {
+            //     if (ProjectContext.Current == null)
+            //         throw new InvalidOperationException("Cannot resolve material path without an active project.");
 
-            mat = MaterialSerializer.LoadMaterial(relPath);
-            materials[relPath] = mat;
-            return mat;
+            //     relPath = ProjectContext.Current.Paths.ToProjectRelative(relPath);
+            // }
+
+            // relPath = NormalizeRelPath(relPath);
+
+            // if (materials.TryGetValue(relPath, out var mat))
+            //     return mat;
+
+            // mat = MaterialSerializer.LoadMaterial(relPath);
+            // materials[relPath] = mat;
+            // return mat;
         }
 
         public void Add(string relPath, Material material)

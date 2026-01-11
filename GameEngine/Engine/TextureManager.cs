@@ -77,7 +77,7 @@ namespace GameEngine.Engine
             return new Texture(handle, width, height);
         }
 
-        private static Texture Create1x1(byte r, byte g, byte b, byte a)
+        public static Texture Create1x1(byte r, byte g, byte b, byte a)
         {
             int handle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, handle);

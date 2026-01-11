@@ -4,7 +4,7 @@ namespace GameEngine.Engine.Components
 {
     public record MeshRendererDto
     (
-        string material
+        Guid material
     );
 
     public class MeshRenderer : Component
@@ -12,7 +12,7 @@ namespace GameEngine.Engine.Components
         public VertexArray vao { get; private set; }
         public VertexBuffer<float> vbo { get; private set; }
 
-        public string? material;
+        public Guid material;
         public Shader? shader;
         public string? vertexShaderPath;
         public string? fragmentShaderPath;
