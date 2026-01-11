@@ -2,13 +2,14 @@ namespace GameEngine.Editor
 {
     public readonly struct MaterialReference
     {
-        public string Path { get; }
+        public Guid Guid { get; }
 
-        public MaterialReference(string path)
+        public MaterialReference(Guid guid)
         {
-            Path = path ?? string.Empty;
+            Guid = guid;
         }
 
-        public override string ToString() => Path;
+        public override string ToString()
+            => Guid == Guid.Empty ? string.Empty : Guid.ToString();
     }
 }

@@ -14,16 +14,14 @@ namespace GameEngine.Editor
             {
                 label = "Material",
                 valueType = typeof(MaterialReference),
-                getValue = () => new MaterialReference(target.material ?? string.Empty),
+                getValue = () => new MaterialReference(target.material),
                 setValue = value =>
                 {
                     var materialReference = (MaterialReference)value;
-                    string? path = string.IsNullOrWhiteSpace(materialReference.Path)
-                        ? null
-                        : materialReference.Path;
-                    if (!string.IsNullOrWhiteSpace(path))
-                        editorState.engineHost.materialManager.Get(path);
-                    target.material = path;
+                    Guid guid = materialReference.Guid;
+                    if (guid != Guid.Empty)
+                        editorState.engineHost.materialManager.Get(guid);
+                    target.material = guid;
                 }
             });
         }

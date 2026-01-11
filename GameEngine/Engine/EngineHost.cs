@@ -12,6 +12,7 @@ namespace GameEngine.Engine
         public ShaderManager shaderManager { get; private set; }
         public MaterialManager materialManager { get; private set; }
         public GameObjectManager gameObjectManager { get; private set; }
+        public AssetManager assetManager { get; private set; }
 
         public Game game;
 
@@ -28,6 +29,7 @@ namespace GameEngine.Engine
             gameObjectManager = new GameObjectManager();
             materialManager = new MaterialManager();
             renderer = new Renderer();
+            assetManager = new AssetManager(textureManager, materialManager);
         }
 
         public void InitializeGL()
@@ -40,6 +42,7 @@ namespace GameEngine.Engine
 
             textureManager.InitializeDefaultTextures();
             materialManager.InitializeDefaultMaterials();
+            assetManager.RegisterBuiltInTextures();
             shaderManager.InitializeDefaultShaders();
             lightManager = new();
 
