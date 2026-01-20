@@ -13,6 +13,7 @@ namespace GameEngine.Editor
             { typeof(string), () => new StringRenderer() },
             { typeof(Color), () => new ColorRenderer() },
             { typeof(MaterialReference), () => new MaterialRenderer() },
+            { typeof(MeshReference), () => new MeshReferenceRenderer() },
         };
 
         public static Control Bind(FieldDescriptor fieldDescriptor, Control parent)

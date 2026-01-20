@@ -20,6 +20,7 @@ namespace GameEngine.Editor
         ObjectHierarchy objectHierarchy;
         Inspector inspector;
         MaterialEditor materialEditor;
+        ModelBrowser modelBrowser;
 
         public Editor()
         {
@@ -46,6 +47,9 @@ namespace GameEngine.Editor
 
             materialEditor = new MaterialEditor(editorState);
             materialEditor.Show(dockPanel, DockState.DockRight);
+
+            modelBrowser = new ModelBrowser(editorState);
+            modelBrowser.Show(dockPanel, DockState.DockRight);
 
             inspector.Activate();
 
@@ -181,6 +185,8 @@ namespace GameEngine.Editor
             var project = ProjectDialogs.OpenProjectWithDialog(editorState, this);
             if (project != null)
                 materialEditor?.RefreshMaterialListFromEditor();
+            if (project != null)
+                modelBrowser?.RefreshModelListFromEditor();
         }
 
         private void sceneSettingsButton_Click(object sender, EventArgs e)
@@ -194,6 +200,8 @@ namespace GameEngine.Editor
             var project = ProjectDialogs.CreateProjectWithDialog(this);
             if (project != null)
                 materialEditor?.RefreshMaterialListFromEditor();
+            if (project != null)
+                modelBrowser?.RefreshModelListFromEditor();
         }
     }
 }

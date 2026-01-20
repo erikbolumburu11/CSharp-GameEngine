@@ -1,11 +1,13 @@
-﻿using OpenTK.Graphics.OpenGL4;
+using OpenTK.Graphics.OpenGL4;
+using System;
 using System.Runtime.InteropServices;
 
 namespace GameEngine.Engine
 {
-    public class VertexArray
+    public class VertexArray : IDisposable
     {
         public int Handle { get; private set; }
+        private bool disposed;
 
         public VertexArray()
         {
@@ -15,12 +17,25 @@ namespace GameEngine.Engine
         public void Bind() => GL.BindVertexArray(Handle);
         public void Unbind() => GL.BindVertexArray(0);
 
-        public void Delete() => GL.DeleteVertexArray(Handle);
+        public void Delete()
+        {
+            if (disposed)
+                return;
+
+            if (Handle != 0)
+                GL.DeleteVertexArray(Handle);
+
+            Handle = 0;
+            disposed = true;
+        }
+
+        public void Dispose() => Delete();
     }
 
-    public class VertexBuffer<T> where T : struct
+    public class VertexBuffer<T> : IDisposable where T : struct
     {
         public int Handle { get; private set; }
+        private bool disposed;
 
         public VertexBuffer(T[] data, BufferUsageHint usage = BufferUsageHint.StaticDraw)
         {
@@ -32,7 +47,19 @@ namespace GameEngine.Engine
 
         public void Bind() => GL.BindBuffer(BufferTarget.ArrayBuffer, Handle);
         public void Unbind() => GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-        public void Delete() => GL.DeleteBuffer(Handle);
+        public void Delete()
+        {
+            if (disposed)
+                return;
+
+            if (Handle != 0)
+                GL.DeleteBuffer(Handle);
+
+            Handle = 0;
+            disposed = true;
+        }
+
+        public void Dispose() => Delete();
     }
 
     public class SSBO

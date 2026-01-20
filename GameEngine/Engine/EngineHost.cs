@@ -12,6 +12,7 @@ namespace GameEngine.Engine
         public ShaderManager shaderManager { get; private set; }
         public MaterialManager materialManager { get; private set; }
         public GameObjectManager gameObjectManager { get; private set; }
+        public GltfInstantiator gltfInstantiator {get; private set; }
         public AssetManager assetManager { get; private set; }
 
         public Game game;
@@ -27,6 +28,7 @@ namespace GameEngine.Engine
             textureManager = new TextureManager();
             shaderManager = new ShaderManager();
             gameObjectManager = new GameObjectManager();
+            gltfInstantiator = new GltfInstantiator(gameObjectManager);
             materialManager = new MaterialManager();
             renderer = new Renderer();
             assetManager = new AssetManager(textureManager, materialManager);
