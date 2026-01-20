@@ -56,13 +56,13 @@ namespace GameEngine.Engine
                 foreach (GameObject go in gameObjectManager.gameObjects)
                 {
                     MeshRenderer? mr = go.GetComponent<MeshRenderer>();
-                    if (mr == null) continue;
+                    if (mr == null || mr.vao == null || mr.vertexCount <= 0) continue;
 
                     Matrix4 model = CreateModelMatrix(go.transform);
                     shadowDepthShader.SetMatrix4("model", model);
 
                     mr.vao.Bind();
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+                    GL.DrawArrays(PrimitiveType.Triangles, 0, mr.vertexCount);
                     mr.vao.Unbind();
                 }
             }
@@ -83,7 +83,7 @@ namespace GameEngine.Engine
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
                 MeshRenderer? meshRenderer = gameObject.GetComponent<MeshRenderer>();
-                if (meshRenderer == null) continue;
+                if (meshRenderer == null || meshRenderer.vao == null || meshRenderer.vertexCount <= 0) continue;
 
                 Matrix4 model = CreateModelMatrix(gameObject.transform);
                 Shader shader = meshRenderer.shader ??= shaderManager.Get(
@@ -119,7 +119,7 @@ namespace GameEngine.Engine
                 shader.SetInt("specularTexture", 1);
 
                 meshRenderer.vao.Bind();
-                GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+                GL.DrawArrays(PrimitiveType.Triangles, 0, meshRenderer.vertexCount);
                 meshRenderer.vao.Unbind();
             }
         }

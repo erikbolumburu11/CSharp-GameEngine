@@ -52,7 +52,8 @@ namespace GameEngine.Engine
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
-            StbImage.stbi_set_flip_vertically_on_load(1);
+            bool flip = ShouldFlipOnLoad(imagePath);
+            StbImage.stbi_set_flip_vertically_on_load(flip ? 1 : 0);
 
             int width;
             int height;
@@ -75,6 +76,15 @@ namespace GameEngine.Engine
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
             return new Texture(handle, width, height);
+        }
+
+        private static bool ShouldFlipOnLoad(string imagePath)
+        {
+            if (string.IsNullOrWhiteSpace(imagePath))
+                return true;
+
+            string normalized = imagePath.Replace('\\', '/');
+            return normalized.IndexOf("/Assets/Textures/Imported/", StringComparison.OrdinalIgnoreCase) < 0;
         }
 
         public static Texture Create1x1(byte r, byte g, byte b, byte a)

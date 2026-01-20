@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using SharpGLTF.Schema2;
 
 namespace GameEngine.Engine
 {
@@ -16,6 +19,8 @@ namespace GameEngine.Engine
         public static readonly Guid FlatNormal =
             new("00000000-0000-0000-0000-000000000004");
     }
+
+    public readonly record struct MeshPrimitiveRef(Guid ModelGuid, int MeshIndex, int PrimitiveIndex);
 
     public class AssetManager
     {
@@ -58,6 +63,10 @@ namespace GameEngine.Engine
         private static readonly Dictionary<Guid, string> guidToPath = new();
         private static readonly Dictionary<Guid, Func<object>> guidToBuiltIn = new();
         private static readonly Dictionary<string, Guid> pathToGuid = new();
+        private static readonly Dictionary<Guid, MeshPrimitiveRef> meshPrimitiveGuidToRef = new();
+        private static readonly Dictionary<MeshPrimitiveRef, Guid> meshPrimitiveRefToGuid = new();
+        private static readonly Dictionary<Guid, string> meshPrimitiveGuidToLabel = new();
+        private static bool meshPrimitiveCacheBuilt;
 
         public static void RegisterVirtualAsset(Guid guid, Func<object> factory)
         {
@@ -68,6 +77,10 @@ namespace GameEngine.Engine
         {
             guidToPath.Clear();
             pathToGuid.Clear();
+            meshPrimitiveGuidToRef.Clear();
+            meshPrimitiveRefToGuid.Clear();
+            meshPrimitiveGuidToLabel.Clear();
+            meshPrimitiveCacheBuilt = false;
 
             foreach
             (
@@ -171,14 +184,133 @@ namespace GameEngine.Engine
             {
                 return (T)(object)MaterialSerializer.LoadMaterial(path);
             }
+            if (typeof(T) == typeof(ModelRoot))
+            {
+                return (T)(object)ModelRoot.Load(path);
+            }
 
             throw new NotSupportedException(
                 $"Asset type {typeof(T).Name} is not supported"
             );
         }
 
-        public static string GuidToPath(Guid guid) => guidToPath[guid];
+        public static Guid GetMeshPrimitiveGuid(Guid modelGuid, int meshIndex, int primitiveIndex)
+        {
+            var key = new MeshPrimitiveRef(modelGuid, meshIndex, primitiveIndex);
+            if (meshPrimitiveRefToGuid.TryGetValue(key, out var existing))
+                return existing;
+
+            Guid guid = CreateMeshPrimitiveGuid(key);
+            meshPrimitiveRefToGuid[key] = guid;
+            meshPrimitiveGuidToRef[guid] = key;
+            return guid;
+        }
+
+        public static bool TryGetMeshPrimitiveRef(Guid primitiveGuid, out MeshPrimitiveRef primitiveRef)
+        {
+            if (meshPrimitiveGuidToRef.TryGetValue(primitiveGuid, out primitiveRef))
+                return true;
+
+            EnsureMeshPrimitiveCache();
+            return meshPrimitiveGuidToRef.TryGetValue(primitiveGuid, out primitiveRef);
+        }
+
+        public static void RegisterModelPrimitives(Guid modelGuid, ModelRoot model, string? modelPath = null)
+        {
+            if (model == null)
+                throw new ArgumentNullException(nameof(model));
+
+            string displayPath = modelPath ?? (guidToPath.TryGetValue(modelGuid, out var path) ? path : modelGuid.ToString());
+            string modelLabel = GetModelLabel(displayPath, model);
+
+            foreach (var mesh in model.LogicalMeshes)
+            {
+                foreach (var primitive in mesh.Primitives)
+                {
+                    Guid primitiveGuid = GetMeshPrimitiveGuid(
+                        modelGuid,
+                        mesh.LogicalIndex,
+                        primitive.LogicalIndex
+                    );
+
+                    string label = $"{modelLabel}:Prim[{primitive.LogicalIndex}]";
+                    meshPrimitiveGuidToLabel[primitiveGuid] = label;
+                }
+            }
+        }
+
+        public static string GuidToPath(Guid guid)
+        {
+            if (guidToPath.TryGetValue(guid, out var path))
+                return path;
+
+            if (meshPrimitiveGuidToLabel.TryGetValue(guid, out var label))
+                return label;
+
+            throw new KeyNotFoundException($"Unknown asset GUID: {guid}");
+        }
+
         public static Guid PathToGuid(string path) => pathToGuid[path];
+
+        private static Guid CreateMeshPrimitiveGuid(MeshPrimitiveRef key)
+        {
+            string payload = $"{key.ModelGuid:N}:{key.MeshIndex}:{key.PrimitiveIndex}";
+            using var md5 = MD5.Create();
+            byte[] hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
+            return new Guid(hash);
+        }
+
+        private static void EnsureMeshPrimitiveCache()
+        {
+            if (meshPrimitiveCacheBuilt)
+                return;
+
+            foreach (var entry in guidToPath)
+            {
+                string path = entry.Value;
+                if (!IsModelAssetPath(path))
+                    continue;
+
+                if (!TryLoad(entry.Key, out ModelRoot model))
+                    continue;
+
+                RegisterModelPrimitives(entry.Key, model, path);
+            }
+
+            meshPrimitiveCacheBuilt = true;
+        }
+
+        private static bool IsModelAssetPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            string ext = Path.GetExtension(path);
+            return ext.Equals(".gltf", StringComparison.OrdinalIgnoreCase)
+                || ext.Equals(".glb", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetModelLabel(string displayPath, ModelRoot model)
+        {
+            if (!string.IsNullOrWhiteSpace(displayPath))
+            {
+                try
+                {
+                    string name = Path.GetFileNameWithoutExtension(displayPath);
+                    if (!string.IsNullOrWhiteSpace(name))
+                        return name;
+                }
+                catch
+                {
+                    // Fall through to the model name.
+                }
+            }
+
+            if (model.DefaultScene != null && !string.IsNullOrWhiteSpace(model.DefaultScene.Name))
+                return model.DefaultScene.Name;
+
+            return "Model";
+        }
     }
 
 

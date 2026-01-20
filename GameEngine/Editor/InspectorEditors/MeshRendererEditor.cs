@@ -12,6 +12,18 @@ namespace GameEngine.Editor
 
             fields.Add(new FieldDescriptor
             {
+                label = "Mesh",
+                valueType = typeof(MeshReference),
+                getValue = () => new MeshReference(target.mesh),
+                setValue = value =>
+                {
+                    var meshReference = (MeshReference)value;
+                    target.mesh = meshReference.Guid;
+                }
+            });
+
+            fields.Add(new FieldDescriptor
+            {
                 label = "Material",
                 valueType = typeof(MaterialReference),
                 getValue = () => new MaterialReference(target.material),
