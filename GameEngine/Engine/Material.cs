@@ -11,6 +11,7 @@ namespace GameEngine.Engine
         Guid? metallicTexGuid,
         Guid? roughnessTexGuid,
         Guid? aoTexGuid,
+        Guid? normalTexGuid,
         bool? useCombinedMR,
         TextureColorSpace? diffuseColorSpace,
         TextureColorSpace? specularColorSpace,
@@ -18,6 +19,7 @@ namespace GameEngine.Engine
         TextureColorSpace? metallicColorSpace,
         TextureColorSpace? roughnessColorSpace,
         TextureColorSpace? aoColorSpace,
+        TextureColorSpace? normalColorSpace,
         float[] uvTiling,
         float[] uvOffset
     );
@@ -32,6 +34,7 @@ namespace GameEngine.Engine
         public Guid? metallicTexGuid;
         public Guid? roughnessTexGuid;
         public Guid? aoTexGuid;
+        public Guid? normalTexGuid;
         public bool useCombinedMR;
         public TextureColorSpace diffuseColorSpace = TextureColorSpace.Srgb;
         public TextureColorSpace specularColorSpace = TextureColorSpace.Linear;
@@ -39,6 +42,7 @@ namespace GameEngine.Engine
         public TextureColorSpace metallicColorSpace = TextureColorSpace.Linear;
         public TextureColorSpace roughnessColorSpace = TextureColorSpace.Linear;
         public TextureColorSpace aoColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace normalColorSpace = TextureColorSpace.Linear;
 
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
@@ -119,6 +123,29 @@ namespace GameEngine.Engine
                 MaterialSerializer.SaveMaterial(this, relPath);
 
             return textureManager.AmbientOcclusionDefault;
+        }
+
+        public Texture GetNormal(TextureManager textureManager)
+        {
+            if (normalTexGuid is null || normalTexGuid.Value == Guid.Empty)
+                return textureManager.FlatNormal;
+
+            if (TryResolveTexture(
+                textureManager,
+                normalTexGuid.Value,
+                normalColorSpace,
+                textureManager.FlatNormal,
+                out var tex))
+            {
+                return tex;
+            }
+
+            normalTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.FlatNormal;
         }
 
         public Texture GetMetallic(TextureManager textureManager)
@@ -228,6 +255,7 @@ namespace GameEngine.Engine
             metallicTexGuid: metallicTexGuid,
             roughnessTexGuid: roughnessTexGuid,
             aoTexGuid: aoTexGuid,
+            normalTexGuid: normalTexGuid,
             useCombinedMR: useCombinedMR,
             diffuseColorSpace: diffuseColorSpace,
             specularColorSpace: specularColorSpace,
@@ -235,6 +263,7 @@ namespace GameEngine.Engine
             metallicColorSpace: metallicColorSpace,
             roughnessColorSpace: roughnessColorSpace,
             aoColorSpace: aoColorSpace,
+            normalColorSpace: normalColorSpace,
             uvTiling: new[] { uvTiling.X, uvTiling.Y },
             uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
@@ -247,6 +276,7 @@ namespace GameEngine.Engine
             metallicTexGuid = dto.metallicTexGuid;
             roughnessTexGuid = dto.roughnessTexGuid;
             aoTexGuid = dto.aoTexGuid;
+            normalTexGuid = dto.normalTexGuid;
             useCombinedMR = dto.useCombinedMR
                 ?? (metallicRoughnessTexGuid is not null && metallicRoughnessTexGuid.Value != Guid.Empty);
             diffuseColorSpace = dto.diffuseColorSpace ?? TextureColorSpace.Srgb;
@@ -255,6 +285,7 @@ namespace GameEngine.Engine
             metallicColorSpace = dto.metallicColorSpace ?? TextureColorSpace.Linear;
             roughnessColorSpace = dto.roughnessColorSpace ?? TextureColorSpace.Linear;
             aoColorSpace = dto.aoColorSpace ?? TextureColorSpace.Linear;
+            normalColorSpace = dto.normalColorSpace ?? TextureColorSpace.Linear;
 
             if (dto.uvTiling is { Length: >= 2 })
                 uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);

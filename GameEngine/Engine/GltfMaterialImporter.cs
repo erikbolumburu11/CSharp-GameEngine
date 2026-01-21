@@ -34,6 +34,7 @@ namespace GameEngine.Engine
                     material.specularColorSpace = TextureColorSpace.Linear;
                     material.metallicRoughnessColorSpace = TextureColorSpace.Linear;
                     material.aoColorSpace = TextureColorSpace.Linear;
+                    material.normalColorSpace = TextureColorSpace.Linear;
                     material.diffuseTexGuid = TryImportTexture(
                         gltfMaterial.FindChannel("BaseColor"),
                         texturesDir,
@@ -60,6 +61,13 @@ namespace GameEngine.Engine
                         texturesDir,
                         baseName,
                         "ao",
+                        modelPath
+                    );
+                    material.normalTexGuid = TryImportTexture(
+                        gltfMaterial.FindChannel("Normal"),
+                        texturesDir,
+                        baseName,
+                        "normal",
                         modelPath
                     );
                     material.useCombinedMR = material.metallicRoughnessTexGuid is not null

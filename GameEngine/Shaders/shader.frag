@@ -20,6 +20,7 @@ uniform sampler2D metallicRoughnessTexture;
 uniform sampler2D metallicTexture;
 uniform sampler2D roughnessTexture;
 uniform sampler2D aoTexture;
+uniform sampler2D normalTexture;
 uniform int useCombinedMR;
 
 uniform sampler2D shadowMap;
@@ -100,6 +101,22 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+mat3 CotangentFrame(vec3 N, vec3 p, vec2 uv)
+{
+    vec3 dp1 = dFdx(p);
+    vec3 dp2 = dFdy(p);
+    vec2 duv1 = dFdx(uv);
+    vec2 duv2 = dFdy(uv);
+
+    vec3 dp2perp = cross(dp2, N);
+    vec3 dp1perp = cross(N, dp1);
+    vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+    float invMax = inversesqrt(max(dot(T, T), dot(B, B)));
+    return mat3(T * invMax, B * invMax, N);
+}
+
 void main()
 {
 #if DEBUG_OUTPUT_SHADOWMAP
@@ -134,6 +151,8 @@ void main()
     float ao = texture(aoTexture, texCoord).r;
 
     vec3 N = normalize(normal);
+    vec3 mapN = texture(normalTexture, texCoord).xyz * 2.0 - 1.0;
+    N = normalize(CotangentFrame(N, fragPos, texCoord) * mapN);
     vec3 V = normalize(viewPos - fragPos);
 
     vec3 Lo = vec3(0.0);

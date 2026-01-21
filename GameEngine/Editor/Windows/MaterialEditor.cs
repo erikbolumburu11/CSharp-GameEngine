@@ -17,11 +17,13 @@ namespace GameEngine.Editor
         private ComboBox metallicTextureComboBox;
         private ComboBox roughnessTextureComboBox;
         private ComboBox aoTextureComboBox;
+        private ComboBox normalTextureComboBox;
         private Button diffuseTextureBrowseButton;
         private Button metallicRoughnessTextureBrowseButton;
         private Button metallicTextureBrowseButton;
         private Button roughnessTextureBrowseButton;
         private Button aoTextureBrowseButton;
+        private Button normalTextureBrowseButton;
         private CheckBox useCombinedMRCheckBox;
         private Vector2Control uvTilingControl;
         private Vector2Control uvOffsetControl;
@@ -88,6 +90,7 @@ namespace GameEngine.Editor
             AddSection(BuildRoughnessTextureEditor());
             AddSection(BuildMetallicRoughnessModeEditor());
             AddSection(BuildAoTextureEditor());
+            AddSection(BuildNormalTextureEditor());
             AddSection(BuildUvEditor());
             AddSeparator();
         }
@@ -264,6 +267,17 @@ namespace GameEngine.Editor
                 out aoTextureBrowseButton,
                 OnAoTextureSelectionChanged,
                 OnAoTextureBrowseClicked
+            );
+        }
+
+        private Control BuildNormalTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Normal Texture",
+                out normalTextureComboBox,
+                out normalTextureBrowseButton,
+                OnNormalTextureSelectionChanged,
+                OnNormalTextureBrowseClicked
             );
         }
 
@@ -498,6 +512,7 @@ namespace GameEngine.Editor
                 SetTextureSelection(metallicTextureComboBox, null);
                 SetTextureSelection(roughnessTextureComboBox, null);
                 SetTextureSelection(aoTextureComboBox, null);
+                SetTextureSelection(normalTextureComboBox, null);
                 if (useCombinedMRCheckBox != null)
                     useCombinedMRCheckBox.Checked = false;
                 UpdateMetalRoughUiState();
@@ -515,6 +530,7 @@ namespace GameEngine.Editor
             SetTextureSelection(metallicTextureComboBox, currentMaterial.metallicTexGuid);
             SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
             SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
+            SetTextureSelection(normalTextureComboBox, currentMaterial.normalTexGuid);
             if (useCombinedMRCheckBox != null)
                 useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
             UpdateMetalRoughUiState();
@@ -710,6 +726,41 @@ namespace GameEngine.Editor
             SetTextureSelection(aoTextureComboBox, guid);
         }
 
+        private void OnNormalTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.normalTexGuid = GetSelectedTexture(normalTextureComboBox);
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void OnNormalTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Normal Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.normalTexGuid = guid;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(normalTextureComboBox, guid);
+        }
+
         public void RefreshMaterialListFromEditor()
         {
             RefreshMaterialList();
@@ -755,6 +806,7 @@ namespace GameEngine.Editor
                 || metallicTextureComboBox == null
                 || roughnessTextureComboBox == null
                 || aoTextureComboBox == null
+                || normalTextureComboBox == null
                 || useCombinedMRCheckBox == null)
                 return;
 
@@ -763,6 +815,7 @@ namespace GameEngine.Editor
             RefreshTextureCombo(metallicTextureComboBox);
             RefreshTextureCombo(roughnessTextureComboBox);
             RefreshTextureCombo(aoTextureComboBox);
+            RefreshTextureCombo(normalTextureComboBox);
 
             if (currentMaterial != null)
             {
@@ -771,6 +824,7 @@ namespace GameEngine.Editor
                 SetTextureSelection(metallicTextureComboBox, currentMaterial.metallicTexGuid);
                 SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
                 SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
+                SetTextureSelection(normalTextureComboBox, currentMaterial.normalTexGuid);
                 useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
                 SetUvControlsEnabled(true);
                 SetUvValues(currentMaterial.uvTiling, currentMaterial.uvOffset);

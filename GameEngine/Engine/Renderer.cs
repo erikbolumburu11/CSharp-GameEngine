@@ -129,6 +129,9 @@ namespace GameEngine.Engine
                 material.GetRoughness(textureManager).Use(TextureUnit.Texture5);
                 shader.SetInt("roughnessTexture", 5);
 
+                material.GetNormal(textureManager).Use(TextureUnit.Texture6);
+                shader.SetInt("normalTexture", 6);
+
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, meshRenderer.vertexCount);
                 meshRenderer.vao.Unbind();
