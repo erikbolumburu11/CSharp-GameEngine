@@ -3,6 +3,12 @@ using StbImageSharp;
 
 namespace GameEngine.Engine
 {
+    public enum TextureColorSpace
+    {
+        Srgb,
+        Linear
+    }
+
     public class Texture : IDisposable
     {
         private readonly int handle;

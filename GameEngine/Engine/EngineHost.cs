@@ -41,6 +41,7 @@ namespace GameEngine.Engine
 
             GL.Enable(EnableCap.DepthTest);
             GL.Enable(EnableCap.Multisample);
+            GL.Enable(EnableCap.FramebufferSrgb);
 
             textureManager.InitializeDefaultTextures();
             materialManager.InitializeDefaultMaterials();
@@ -55,7 +56,13 @@ namespace GameEngine.Engine
         {
             if(!glInitialized) return;
 
-            GL.ClearColor(game.scene.skyboxColor);
+            var skyboxColor = game.scene.skyboxColor;
+            GL.ClearColor(
+                SrgbToLinear(skyboxColor.R / 255f),
+                SrgbToLinear(skyboxColor.G / 255f),
+                SrgbToLinear(skyboxColor.B / 255f),
+                skyboxColor.A / 255f
+            );
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             renderer.Render(
@@ -98,6 +105,13 @@ namespace GameEngine.Engine
         public void Dispose()
         {
             throw new NotImplementedException();
+        }
+
+        private static float SrgbToLinear(float c)
+        {
+            if (c <= 0.04045f)
+                return c / 12.92f;
+            return MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
         }
     }
 }

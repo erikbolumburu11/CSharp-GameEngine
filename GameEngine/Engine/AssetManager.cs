@@ -250,6 +250,11 @@ namespace GameEngine.Engine
             throw new KeyNotFoundException($"Unknown asset GUID: {guid}");
         }
 
+        public static bool TryGetPath(Guid guid, out string path)
+        {
+            return guidToPath.TryGetValue(guid, out path);
+        }
+
         public static Guid PathToGuid(string path) => pathToGuid[path];
 
         private static Guid CreateMeshPrimitiveGuid(MeshPrimitiveRef key)

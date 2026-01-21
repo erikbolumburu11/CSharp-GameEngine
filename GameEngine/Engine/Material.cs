@@ -7,6 +7,8 @@ namespace GameEngine.Engine
     (
         Guid? diffuseTexGuid,
         Guid? specularTexGuid,
+        TextureColorSpace? diffuseColorSpace,
+        TextureColorSpace? specularColorSpace,
         float[] uvTiling,
         float[] uvOffset
     );
@@ -17,6 +19,8 @@ namespace GameEngine.Engine
 
         public Guid? diffuseTexGuid;
         public Guid? specularTexGuid;
+        public TextureColorSpace diffuseColorSpace = TextureColorSpace.Srgb;
+        public TextureColorSpace specularColorSpace = TextureColorSpace.Linear;
 
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
@@ -26,7 +30,7 @@ namespace GameEngine.Engine
             if (diffuseTexGuid is null || diffuseTexGuid.Value == Guid.Empty)
                 return textureManager.White;
 
-            if (AssetDatabase.TryLoad<Texture>(diffuseTexGuid.Value, out var tex) && tex != null)
+            if (TryResolveTexture(textureManager, diffuseTexGuid.Value, diffuseColorSpace, textureManager.White, out var tex))
                 return tex;
 
             diffuseTexGuid = null;
@@ -42,7 +46,7 @@ namespace GameEngine.Engine
             if (specularTexGuid is null || specularTexGuid.Value == Guid.Empty)
                 return textureManager.Black;
 
-            if (AssetDatabase.TryLoad<Texture>(specularTexGuid.Value, out var tex) && tex != null)
+            if (TryResolveTexture(textureManager, specularTexGuid.Value, specularColorSpace, textureManager.Black, out var tex))
                 return tex;
 
             specularTexGuid = null;
@@ -53,10 +57,65 @@ namespace GameEngine.Engine
             return textureManager.Black;
         }
 
+        private static bool TryResolveTexture(
+            TextureManager textureManager,
+            Guid guid,
+            TextureColorSpace colorSpace,
+            Texture fallback,
+            out Texture texture
+        )
+        {
+            if (AssetDatabase.IsVirtual(guid))
+            {
+                texture = GetBuiltInTexture(textureManager, guid, colorSpace, fallback);
+                return true;
+            }
+
+            if (!AssetDatabase.TryGetPath(guid, out var path)
+                || string.IsNullOrWhiteSpace(path)
+                || !File.Exists(path))
+            {
+                texture = null!;
+                return false;
+            }
+
+            try
+            {
+                texture = textureManager.Get(path, colorSpace);
+                return true;
+            }
+            catch
+            {
+                texture = null!;
+                return false;
+            }
+        }
+
+        private static Texture GetBuiltInTexture(
+            TextureManager textureManager,
+            Guid guid,
+            TextureColorSpace colorSpace,
+            Texture fallback
+        )
+        {
+            if (guid == BuiltInGuids.WhiteTexture)
+                return colorSpace == TextureColorSpace.Srgb ? textureManager.WhiteSrgb : textureManager.White;
+            if (guid == BuiltInGuids.GreyTexture)
+                return colorSpace == TextureColorSpace.Srgb ? textureManager.GreySrgb : textureManager.Grey;
+            if (guid == BuiltInGuids.BlackTexture)
+                return colorSpace == TextureColorSpace.Srgb ? textureManager.BlackSrgb : textureManager.Black;
+            if (guid == BuiltInGuids.FlatNormal)
+                return textureManager.FlatNormal;
+
+            return fallback;
+        }
+
         public MaterialDto ToDto() => new
         (
             diffuseTexGuid: diffuseTexGuid,
             specularTexGuid: specularTexGuid,
+            diffuseColorSpace: diffuseColorSpace,
+            specularColorSpace: specularColorSpace,
             uvTiling: new[] { uvTiling.X, uvTiling.Y },
             uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
@@ -65,6 +124,8 @@ namespace GameEngine.Engine
         {
             diffuseTexGuid = dto.diffuseTexGuid;
             specularTexGuid = dto.specularTexGuid;
+            diffuseColorSpace = dto.diffuseColorSpace ?? TextureColorSpace.Srgb;
+            specularColorSpace = dto.specularColorSpace ?? TextureColorSpace.Linear;
 
             if (dto.uvTiling is { Length: >= 2 })
                 uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);

@@ -30,6 +30,8 @@ namespace GameEngine.Engine
                 if (!File.Exists(absMaterialPath))
                 {
                     var material = new Material();
+                    material.diffuseColorSpace = TextureColorSpace.Srgb;
+                    material.specularColorSpace = TextureColorSpace.Linear;
                     material.diffuseTexGuid = TryImportTexture(
                         gltfMaterial.FindChannel("BaseColor"),
                         texturesDir,

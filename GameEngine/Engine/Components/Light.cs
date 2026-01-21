@@ -66,14 +66,31 @@ namespace GameEngine.Engine.Components
             if (dir.LengthSquared > 0) dir = dir.Normalized();
 
             float packedRadius = (type == LightType.Point) ? radius : 0f;
+            Vector3 colorLinear = SrgbToLinear(color / 255f);
 
             return new LightData
             {
                 positionIntensity = new Vector4(gameObject.transform.WorldPosition, intensity / 100f),
-                colorRadius       = new Vector4(color / 255f, packedRadius),
+                colorRadius       = new Vector4(colorLinear, packedRadius),
                 directionType     = new Vector4(dir, (float)type),
                 specularPadding   = new Vector4(specularStrength, 0f, 0f, 0f)
             };
+        }
+
+        private static Vector3 SrgbToLinear(Vector3 srgb)
+        {
+            return new Vector3(
+                SrgbToLinear(srgb.X),
+                SrgbToLinear(srgb.Y),
+                SrgbToLinear(srgb.Z)
+            );
+        }
+
+        private static float SrgbToLinear(float c)
+        {
+            if (c <= 0.04045f)
+                return c / 12.92f;
+            return MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
         }
     }
 }

@@ -22,7 +22,7 @@ void main()
 {
     gl_Position = vec4(aPosition, 1.0f) * model * view * projection; 
     fragPos = vec3(vec4(aPosition, 1.0f) * model);
-    normal = mat3(transpose(inverse(model))) * aNormal;
+    normal = aNormal * mat3(transpose(inverse(model)));
     texCoord = aTexCoord * uvTiling + uvOffset;
     fragPosLightSpace = vec4(aPosition, 1.0) * model * lightSpaceMatrix;
 }

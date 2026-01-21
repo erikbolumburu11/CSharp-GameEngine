@@ -5,24 +5,31 @@ namespace GameEngine.Engine
 {
     public class TextureManager : IDisposable
     {
-        readonly Dictionary<string, Texture> textures;
+        readonly Dictionary<TextureKey, Texture> textures;
 
         public Texture White { get; private set; }
         public Texture Grey { get; private set; }
         public Texture Black { get; private set; }
         public Texture FlatNormal { get; private set; }
+        public Texture WhiteSrgb { get; private set; }
+        public Texture GreySrgb { get; private set; }
+        public Texture BlackSrgb { get; private set; }
 
         public TextureManager()
         {
-            textures = new Dictionary<string, Texture>(StringComparer.OrdinalIgnoreCase);
+            textures = new Dictionary<TextureKey, Texture>();
         }
 
         public void InitializeDefaultTextures()
         {
-            White = Create1x1(255, 255, 255, 255);
-            Grey = Create1x1(127, 127, 127, 255);
-            Black = Create1x1(0, 0, 0, 255);
-            FlatNormal = Create1x1(128, 128, 255, 255);
+            White = Create1x1(255, 255, 255, 255, TextureColorSpace.Linear);
+            Grey = Create1x1(127, 127, 127, 255, TextureColorSpace.Linear);
+            Black = Create1x1(0, 0, 0, 255, TextureColorSpace.Linear);
+            FlatNormal = Create1x1(128, 128, 255, 255, TextureColorSpace.Linear);
+
+            WhiteSrgb = Create1x1(255, 255, 255, 255, TextureColorSpace.Srgb);
+            GreySrgb = Create1x1(127, 127, 127, 255, TextureColorSpace.Srgb);
+            BlackSrgb = Create1x1(0, 0, 0, 255, TextureColorSpace.Srgb);
         }
 
         public void Dispose()
@@ -32,20 +39,34 @@ namespace GameEngine.Engine
 
         public Texture Get(string? path)
         {
-            if (string.IsNullOrWhiteSpace(path)) return White;
-            if (ProjectContext.Current == null) return White;
+            return Get(path, TextureColorSpace.Linear);
+        }
+
+        public Texture Get(string? path, TextureColorSpace colorSpace)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return colorSpace == TextureColorSpace.Srgb ? WhiteSrgb : White;
+
+            if (ProjectContext.Current == null)
+                return colorSpace == TextureColorSpace.Srgb ? WhiteSrgb : White;
 
             path = Path.GetFullPath(Path.Combine(ProjectContext.Current.RootPath, path));
 
-            if (textures.TryGetValue(path, out var tex))
+            var key = new TextureKey(path, colorSpace);
+            if (textures.TryGetValue(key, out var tex))
                 return tex;
 
-            tex = LoadFromFile(path);
-            textures[path] = tex;
+            tex = LoadFromFile(path, colorSpace);
+            textures[key] = tex;
             return tex;
         }
 
         public static Texture LoadFromFile(string imagePath)
+        {
+            return LoadFromFile(imagePath, TextureColorSpace.Linear);
+        }
+
+        public static Texture LoadFromFile(string imagePath, TextureColorSpace colorSpace)
         {
             int handle = GL.GenTexture();
 
@@ -61,7 +82,8 @@ namespace GameEngine.Engine
             using (Stream stream = File.OpenRead(imagePath))
             {
                 ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
+                PixelInternalFormat internalFormat = GetInternalFormat(colorSpace);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, internalFormat, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, image.Data);
                 width = image.Width;
                 height = image.Height;
             }
@@ -87,13 +109,14 @@ namespace GameEngine.Engine
             return normalized.IndexOf("/Assets/Textures/Imported/", StringComparison.OrdinalIgnoreCase) < 0;
         }
 
-        public static Texture Create1x1(byte r, byte g, byte b, byte a)
+        public static Texture Create1x1(byte r, byte g, byte b, byte a, TextureColorSpace colorSpace = TextureColorSpace.Linear)
         {
             int handle = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, handle);
 
             byte[] data = { r, g, b, a };
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, 1, 1, 0,
+            PixelInternalFormat internalFormat = GetInternalFormat(colorSpace);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, internalFormat, 1, 1, 0,
                 PixelFormat.Rgba, PixelType.UnsignedByte, data);
 
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -102,6 +125,44 @@ namespace GameEngine.Engine
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
             return new Texture(handle, 1, 1);
+        }
+
+        private static PixelInternalFormat GetInternalFormat(TextureColorSpace colorSpace)
+        {
+            return colorSpace == TextureColorSpace.Srgb
+                ? PixelInternalFormat.Srgb8Alpha8
+                : PixelInternalFormat.Rgba;
+        }
+
+        private readonly struct TextureKey : IEquatable<TextureKey>
+        {
+            public readonly string Path;
+            public readonly TextureColorSpace ColorSpace;
+
+            public TextureKey(string path, TextureColorSpace colorSpace)
+            {
+                Path = path;
+                ColorSpace = colorSpace;
+            }
+
+            public bool Equals(TextureKey other)
+            {
+                return ColorSpace == other.ColorSpace
+                    && StringComparer.OrdinalIgnoreCase.Equals(Path, other.Path);
+            }
+
+            public override bool Equals(object? obj)
+            {
+                return obj is TextureKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(
+                    StringComparer.OrdinalIgnoreCase.GetHashCode(Path),
+                    (int)ColorSpace
+                );
+            }
         }
 
     }
