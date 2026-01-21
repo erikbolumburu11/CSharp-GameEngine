@@ -7,8 +7,17 @@ namespace GameEngine.Engine
     (
         Guid? diffuseTexGuid,
         Guid? specularTexGuid,
+        Guid? metallicRoughnessTexGuid,
+        Guid? metallicTexGuid,
+        Guid? roughnessTexGuid,
+        Guid? aoTexGuid,
+        bool? useCombinedMR,
         TextureColorSpace? diffuseColorSpace,
         TextureColorSpace? specularColorSpace,
+        TextureColorSpace? metallicRoughnessColorSpace,
+        TextureColorSpace? metallicColorSpace,
+        TextureColorSpace? roughnessColorSpace,
+        TextureColorSpace? aoColorSpace,
         float[] uvTiling,
         float[] uvOffset
     );
@@ -19,8 +28,17 @@ namespace GameEngine.Engine
 
         public Guid? diffuseTexGuid;
         public Guid? specularTexGuid;
+        public Guid? metallicRoughnessTexGuid;
+        public Guid? metallicTexGuid;
+        public Guid? roughnessTexGuid;
+        public Guid? aoTexGuid;
+        public bool useCombinedMR;
         public TextureColorSpace diffuseColorSpace = TextureColorSpace.Srgb;
         public TextureColorSpace specularColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace metallicRoughnessColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace metallicColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace roughnessColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace aoColorSpace = TextureColorSpace.Linear;
 
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
@@ -55,6 +73,98 @@ namespace GameEngine.Engine
                 MaterialSerializer.SaveMaterial(this, relPath);
 
             return textureManager.Black;
+        }
+
+        public Texture GetMetallicRoughness(TextureManager textureManager)
+        {
+            if (metallicRoughnessTexGuid is null || metallicRoughnessTexGuid.Value == Guid.Empty)
+                return textureManager.MetallicRoughnessDefault;
+
+            if (TryResolveTexture(
+                textureManager,
+                metallicRoughnessTexGuid.Value,
+                metallicRoughnessColorSpace,
+                textureManager.MetallicRoughnessDefault,
+                out var tex))
+            {
+                return tex;
+            }
+
+            metallicRoughnessTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.MetallicRoughnessDefault;
+        }
+
+        public Texture GetAmbientOcclusion(TextureManager textureManager)
+        {
+            if (aoTexGuid is null || aoTexGuid.Value == Guid.Empty)
+                return textureManager.AmbientOcclusionDefault;
+
+            if (TryResolveTexture(
+                textureManager,
+                aoTexGuid.Value,
+                aoColorSpace,
+                textureManager.AmbientOcclusionDefault,
+                out var tex))
+            {
+                return tex;
+            }
+
+            aoTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.AmbientOcclusionDefault;
+        }
+
+        public Texture GetMetallic(TextureManager textureManager)
+        {
+            if (metallicTexGuid is null || metallicTexGuid.Value == Guid.Empty)
+                return textureManager.MetallicDefault;
+
+            if (TryResolveTexture(
+                textureManager,
+                metallicTexGuid.Value,
+                metallicColorSpace,
+                textureManager.MetallicDefault,
+                out var tex))
+            {
+                return tex;
+            }
+
+            metallicTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.MetallicDefault;
+        }
+
+        public Texture GetRoughness(TextureManager textureManager)
+        {
+            if (roughnessTexGuid is null || roughnessTexGuid.Value == Guid.Empty)
+                return textureManager.RoughnessDefault;
+
+            if (TryResolveTexture(
+                textureManager,
+                roughnessTexGuid.Value,
+                roughnessColorSpace,
+                textureManager.RoughnessDefault,
+                out var tex))
+            {
+                return tex;
+            }
+
+            roughnessTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.RoughnessDefault;
         }
 
         private static bool TryResolveTexture(
@@ -114,8 +224,17 @@ namespace GameEngine.Engine
         (
             diffuseTexGuid: diffuseTexGuid,
             specularTexGuid: specularTexGuid,
+            metallicRoughnessTexGuid: metallicRoughnessTexGuid,
+            metallicTexGuid: metallicTexGuid,
+            roughnessTexGuid: roughnessTexGuid,
+            aoTexGuid: aoTexGuid,
+            useCombinedMR: useCombinedMR,
             diffuseColorSpace: diffuseColorSpace,
             specularColorSpace: specularColorSpace,
+            metallicRoughnessColorSpace: metallicRoughnessColorSpace,
+            metallicColorSpace: metallicColorSpace,
+            roughnessColorSpace: roughnessColorSpace,
+            aoColorSpace: aoColorSpace,
             uvTiling: new[] { uvTiling.X, uvTiling.Y },
             uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
@@ -124,8 +243,18 @@ namespace GameEngine.Engine
         {
             diffuseTexGuid = dto.diffuseTexGuid;
             specularTexGuid = dto.specularTexGuid;
+            metallicRoughnessTexGuid = dto.metallicRoughnessTexGuid;
+            metallicTexGuid = dto.metallicTexGuid;
+            roughnessTexGuid = dto.roughnessTexGuid;
+            aoTexGuid = dto.aoTexGuid;
+            useCombinedMR = dto.useCombinedMR
+                ?? (metallicRoughnessTexGuid is not null && metallicRoughnessTexGuid.Value != Guid.Empty);
             diffuseColorSpace = dto.diffuseColorSpace ?? TextureColorSpace.Srgb;
             specularColorSpace = dto.specularColorSpace ?? TextureColorSpace.Linear;
+            metallicRoughnessColorSpace = dto.metallicRoughnessColorSpace ?? TextureColorSpace.Linear;
+            metallicColorSpace = dto.metallicColorSpace ?? TextureColorSpace.Linear;
+            roughnessColorSpace = dto.roughnessColorSpace ?? TextureColorSpace.Linear;
+            aoColorSpace = dto.aoColorSpace ?? TextureColorSpace.Linear;
 
             if (dto.uvTiling is { Length: >= 2 })
                 uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);

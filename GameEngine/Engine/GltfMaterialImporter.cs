@@ -32,6 +32,8 @@ namespace GameEngine.Engine
                     var material = new Material();
                     material.diffuseColorSpace = TextureColorSpace.Srgb;
                     material.specularColorSpace = TextureColorSpace.Linear;
+                    material.metallicRoughnessColorSpace = TextureColorSpace.Linear;
+                    material.aoColorSpace = TextureColorSpace.Linear;
                     material.diffuseTexGuid = TryImportTexture(
                         gltfMaterial.FindChannel("BaseColor"),
                         texturesDir,
@@ -46,6 +48,22 @@ namespace GameEngine.Engine
                         "specular",
                         modelPath
                     );
+                    material.metallicRoughnessTexGuid = TryImportTexture(
+                        gltfMaterial.FindChannel("MetallicRoughness"),
+                        texturesDir,
+                        baseName,
+                        "metalrough",
+                        modelPath
+                    );
+                    material.aoTexGuid = TryImportTexture(
+                        gltfMaterial.FindChannel("Occlusion"),
+                        texturesDir,
+                        baseName,
+                        "ao",
+                        modelPath
+                    );
+                    material.useCombinedMR = material.metallicRoughnessTexGuid is not null
+                        && material.metallicRoughnessTexGuid.Value != Guid.Empty;
                     MaterialSerializer.SaveMaterial(material, relMaterialPath);
                 }
 

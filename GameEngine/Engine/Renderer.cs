@@ -76,7 +76,7 @@ namespace GameEngine.Engine
 
 
             if (hasShadowPass)
-                shadowMap!.BindForReading(TextureUnit.Texture2);
+                shadowMap!.BindForReading(TextureUnit.Texture3);
 
             view = camera.GetViewMatrix();
             projection = camera.GetProjectionMatrix(camera.Width, camera.Height);
@@ -100,7 +100,7 @@ namespace GameEngine.Engine
                 if (hasShadowPass)
                 {
                     shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
-                    shader.SetInt("shadowMap", 2);
+                    shader.SetInt("shadowMap", 3);
                 }
 
                 shader.SetInt("lightCount", lightManager.lights.Count);
@@ -115,8 +115,19 @@ namespace GameEngine.Engine
                 material.GetDiffuse(textureManager).Use(TextureUnit.Texture0);
                 shader.SetInt("diffuseTexture", 0);
 
-                material.GetSpecular(textureManager).Use(TextureUnit.Texture1);
-                shader.SetInt("specularTexture", 1);
+                shader.SetInt("useCombinedMR", material.useCombinedMR ? 1 : 0);
+
+                material.GetMetallicRoughness(textureManager).Use(TextureUnit.Texture1);
+                shader.SetInt("metallicRoughnessTexture", 1);
+
+                material.GetAmbientOcclusion(textureManager).Use(TextureUnit.Texture2);
+                shader.SetInt("aoTexture", 2);
+
+                material.GetMetallic(textureManager).Use(TextureUnit.Texture4);
+                shader.SetInt("metallicTexture", 4);
+
+                material.GetRoughness(textureManager).Use(TextureUnit.Texture5);
+                shader.SetInt("roughnessTexture", 5);
 
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, meshRenderer.vertexCount);

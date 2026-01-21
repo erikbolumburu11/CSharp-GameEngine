@@ -14,6 +14,10 @@ namespace GameEngine.Engine
         public Texture WhiteSrgb { get; private set; }
         public Texture GreySrgb { get; private set; }
         public Texture BlackSrgb { get; private set; }
+        public Texture MetallicRoughnessDefault { get; private set; }
+        public Texture AmbientOcclusionDefault { get; private set; }
+        public Texture MetallicDefault { get; private set; }
+        public Texture RoughnessDefault { get; private set; }
 
         public TextureManager()
         {
@@ -30,6 +34,11 @@ namespace GameEngine.Engine
             WhiteSrgb = Create1x1(255, 255, 255, 255, TextureColorSpace.Srgb);
             GreySrgb = Create1x1(127, 127, 127, 255, TextureColorSpace.Srgb);
             BlackSrgb = Create1x1(0, 0, 0, 255, TextureColorSpace.Srgb);
+
+            MetallicRoughnessDefault = Create1x1(0, 128, 0, 255, TextureColorSpace.Linear);
+            AmbientOcclusionDefault = Create1x1(255, 255, 255, 255, TextureColorSpace.Linear);
+            MetallicDefault = Create1x1(0, 0, 0, 255, TextureColorSpace.Linear);
+            RoughnessDefault = Create1x1(128, 128, 128, 255, TextureColorSpace.Linear);
         }
 
         public void Dispose()

@@ -13,9 +13,16 @@ namespace GameEngine.Editor
         private Button newMaterialButton;
         private Button deleteMaterialButton;
         private ComboBox diffuseTextureComboBox;
-        private ComboBox specularTextureComboBox;
+        private ComboBox metallicRoughnessTextureComboBox;
+        private ComboBox metallicTextureComboBox;
+        private ComboBox roughnessTextureComboBox;
+        private ComboBox aoTextureComboBox;
         private Button diffuseTextureBrowseButton;
-        private Button specularTextureBrowseButton;
+        private Button metallicRoughnessTextureBrowseButton;
+        private Button metallicTextureBrowseButton;
+        private Button roughnessTextureBrowseButton;
+        private Button aoTextureBrowseButton;
+        private CheckBox useCombinedMRCheckBox;
         private Vector2Control uvTilingControl;
         private Vector2Control uvOffsetControl;
         private Material? currentMaterial;
@@ -76,7 +83,11 @@ namespace GameEngine.Editor
             AddSection(BuildMaterialSelector());
             AddSection(BuildMaterialActions());
             AddSection(BuildDiffuseTextureEditor());
-            AddSection(BuildSpecularTextureEditor());
+            AddSection(BuildMetallicRoughnessTextureEditor());
+            AddSection(BuildMetallicTextureEditor());
+            AddSection(BuildRoughnessTextureEditor());
+            AddSection(BuildMetallicRoughnessModeEditor());
+            AddSection(BuildAoTextureEditor());
             AddSection(BuildUvEditor());
             AddSeparator();
         }
@@ -177,14 +188,82 @@ namespace GameEngine.Editor
             );
         }
 
-        private Control BuildSpecularTextureEditor()
+        private Control BuildMetallicRoughnessTextureEditor()
         {
             return BuildTextureComboEditor(
-                "Specular Texture",
-                out specularTextureComboBox,
-                out specularTextureBrowseButton,
-                OnSpecularTextureSelectionChanged,
-                OnSpecularTextureBrowseClicked
+                "Metallic/Roughness Texture",
+                out metallicRoughnessTextureComboBox,
+                out metallicRoughnessTextureBrowseButton,
+                OnMetallicRoughnessTextureSelectionChanged,
+                OnMetallicRoughnessTextureBrowseClicked
+            );
+        }
+
+        private Control BuildMetallicTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Metallic Texture",
+                out metallicTextureComboBox,
+                out metallicTextureBrowseButton,
+                OnMetallicTextureSelectionChanged,
+                OnMetallicTextureBrowseClicked
+            );
+        }
+
+        private Control BuildRoughnessTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Roughness Texture",
+                out roughnessTextureComboBox,
+                out roughnessTextureBrowseButton,
+                OnRoughnessTextureSelectionChanged,
+                OnRoughnessTextureBrowseClicked
+            );
+        }
+
+        private Control BuildMetallicRoughnessModeEditor()
+        {
+            var section = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2),
+                Padding = Padding.Empty
+            };
+
+            var headerLabel = new Label
+            {
+                Text = "Metal/Rough Source",
+                Font = new Font(Font, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(0, 4, 0, 2),
+                Dock = DockStyle.Top
+            };
+            section.Controls.Add(headerLabel);
+
+            useCombinedMRCheckBox = new CheckBox
+            {
+                Text = "Use combined Metal/Rough texture",
+                AutoSize = true,
+                Dock = DockStyle.Top,
+                Margin = new Padding(0, 0, 0, 4)
+            };
+            useCombinedMRCheckBox.CheckedChanged += OnUseCombinedMRChanged;
+            section.Controls.Add(useCombinedMRCheckBox);
+            section.Controls.SetChildIndex(useCombinedMRCheckBox, 0);
+
+            return section;
+        }
+
+        private Control BuildAoTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Ambient Occlusion Texture",
+                out aoTextureComboBox,
+                out aoTextureBrowseButton,
+                OnAoTextureSelectionChanged,
+                OnAoTextureBrowseClicked
             );
         }
 
@@ -415,7 +494,13 @@ namespace GameEngine.Editor
                 currentMaterialPath = null;
                 RefreshTextureLists();
                 SetTextureSelection(diffuseTextureComboBox, null);
-                SetTextureSelection(specularTextureComboBox, null);
+                SetTextureSelection(metallicRoughnessTextureComboBox, null);
+                SetTextureSelection(metallicTextureComboBox, null);
+                SetTextureSelection(roughnessTextureComboBox, null);
+                SetTextureSelection(aoTextureComboBox, null);
+                if (useCombinedMRCheckBox != null)
+                    useCombinedMRCheckBox.Checked = false;
+                UpdateMetalRoughUiState();
                 return;
             }
 
@@ -426,7 +511,13 @@ namespace GameEngine.Editor
                 currentMaterial = MaterialSerializer.LoadMaterial(relPath);
             RefreshTextureLists();
             SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTexGuid);
-            SetTextureSelection(specularTextureComboBox, currentMaterial.specularTexGuid);
+            SetTextureSelection(metallicRoughnessTextureComboBox, currentMaterial.metallicRoughnessTexGuid);
+            SetTextureSelection(metallicTextureComboBox, currentMaterial.metallicTexGuid);
+            SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
+            SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
+            if (useCombinedMRCheckBox != null)
+                useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
+            UpdateMetalRoughUiState();
         }
 
         private void OnDiffuseTextureSelectionChanged(object? sender, EventArgs e)
@@ -464,21 +555,24 @@ namespace GameEngine.Editor
             SetTextureSelection(diffuseTextureComboBox, guid);
         }
 
-        private void OnSpecularTextureSelectionChanged(object? sender, EventArgs e)
+        private void OnMetallicRoughnessTextureSelectionChanged(object? sender, EventArgs e)
         {
             if (!TryGetCurrentMaterial(out var material, out var path))
                 return;
 
-            material.specularTexGuid = GetSelectedTexture(specularTextureComboBox);
+            material.metallicRoughnessTexGuid = GetSelectedTexture(metallicRoughnessTextureComboBox);
+            if (material.metallicRoughnessTexGuid is not null && material.metallicRoughnessTexGuid.Value != Guid.Empty)
+                material.useCombinedMR = true;
             MaterialSerializer.SaveMaterial(material, path);
+            SyncUseCombinedMR(material.useCombinedMR);
         }
 
-        private void OnSpecularTextureBrowseClicked(object? sender, EventArgs e)
+        private void OnMetallicRoughnessTextureBrowseClicked(object? sender, EventArgs e)
         {
             if (!TryGetCurrentMaterial(out var material, out var path))
                 return;
 
-            string? relPath = BrowseForTexture("Select Specular Texture");
+            string? relPath = BrowseForTexture("Select Metallic/Roughness Texture");
             if (string.IsNullOrWhiteSpace(relPath))
                 return;
 
@@ -494,9 +588,126 @@ namespace GameEngine.Editor
                 return;
             }
 
-            material.specularTexGuid = guid;
+            material.metallicRoughnessTexGuid = guid;
+            material.useCombinedMR = true;
             MaterialSerializer.SaveMaterial(material, path);
-            SetTextureSelection(specularTextureComboBox, guid);
+            SetTextureSelection(metallicRoughnessTextureComboBox, guid);
+            SyncUseCombinedMR(material.useCombinedMR);
+        }
+
+        private void OnMetallicTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.metallicTexGuid = GetSelectedTexture(metallicTextureComboBox);
+            if (material.metallicTexGuid is not null && material.metallicTexGuid.Value != Guid.Empty)
+                material.useCombinedMR = false;
+            MaterialSerializer.SaveMaterial(material, path);
+            SyncUseCombinedMR(material.useCombinedMR);
+        }
+
+        private void OnMetallicTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Metallic Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.metallicTexGuid = guid;
+            material.useCombinedMR = false;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(metallicTextureComboBox, guid);
+            SyncUseCombinedMR(material.useCombinedMR);
+        }
+
+        private void OnRoughnessTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.roughnessTexGuid = GetSelectedTexture(roughnessTextureComboBox);
+            if (material.roughnessTexGuid is not null && material.roughnessTexGuid.Value != Guid.Empty)
+                material.useCombinedMR = false;
+            MaterialSerializer.SaveMaterial(material, path);
+            SyncUseCombinedMR(material.useCombinedMR);
+        }
+
+        private void OnRoughnessTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Roughness Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.roughnessTexGuid = guid;
+            material.useCombinedMR = false;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(roughnessTextureComboBox, guid);
+            SyncUseCombinedMR(material.useCombinedMR);
+        }
+
+        private void OnAoTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.aoTexGuid = GetSelectedTexture(aoTextureComboBox);
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void OnAoTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Ambient Occlusion Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.aoTexGuid = guid;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(aoTextureComboBox, guid);
         }
 
         public void RefreshMaterialListFromEditor()
@@ -539,16 +750,28 @@ namespace GameEngine.Editor
 
         private void RefreshTextureLists()
         {
-            if (diffuseTextureComboBox == null || specularTextureComboBox == null)
+            if (diffuseTextureComboBox == null
+                || metallicRoughnessTextureComboBox == null
+                || metallicTextureComboBox == null
+                || roughnessTextureComboBox == null
+                || aoTextureComboBox == null
+                || useCombinedMRCheckBox == null)
                 return;
 
             RefreshTextureCombo(diffuseTextureComboBox);
-            RefreshTextureCombo(specularTextureComboBox);
+            RefreshTextureCombo(metallicRoughnessTextureComboBox);
+            RefreshTextureCombo(metallicTextureComboBox);
+            RefreshTextureCombo(roughnessTextureComboBox);
+            RefreshTextureCombo(aoTextureComboBox);
 
             if (currentMaterial != null)
             {
                 SetTextureSelection(diffuseTextureComboBox, currentMaterial.diffuseTexGuid);
-                SetTextureSelection(specularTextureComboBox, currentMaterial.specularTexGuid);
+                SetTextureSelection(metallicRoughnessTextureComboBox, currentMaterial.metallicRoughnessTexGuid);
+                SetTextureSelection(metallicTextureComboBox, currentMaterial.metallicTexGuid);
+                SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
+                SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
+                useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
                 SetUvControlsEnabled(true);
                 SetUvValues(currentMaterial.uvTiling, currentMaterial.uvOffset);
             }
@@ -557,6 +780,8 @@ namespace GameEngine.Editor
                 SetUvControlsEnabled(false);
                 SetUvValues(new Vector2(1f, 1f), new Vector2(0f, 0f));
             }
+
+            UpdateMetalRoughUiState();
         }
 
         private void RefreshTextureCombo(ComboBox combo)
@@ -803,6 +1028,45 @@ namespace GameEngine.Editor
 
             uvTilingControl.Enabled = enabled;
             uvOffsetControl.Enabled = enabled;
+        }
+
+        private void OnUseCombinedMRChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.useCombinedMR = useCombinedMRCheckBox.Checked;
+            MaterialSerializer.SaveMaterial(material, path);
+            UpdateMetalRoughUiState();
+        }
+
+        private void UpdateMetalRoughUiState()
+        {
+            if (useCombinedMRCheckBox == null)
+                return;
+
+            bool hasMaterial = currentMaterial != null;
+            bool useCombined = hasMaterial && useCombinedMRCheckBox.Checked;
+
+            useCombinedMRCheckBox.Enabled = hasMaterial;
+            SetMetalRoughControlState(metallicRoughnessTextureComboBox, metallicRoughnessTextureBrowseButton, hasMaterial && useCombined);
+            SetMetalRoughControlState(metallicTextureComboBox, metallicTextureBrowseButton, hasMaterial && !useCombined);
+            SetMetalRoughControlState(roughnessTextureComboBox, roughnessTextureBrowseButton, hasMaterial && !useCombined);
+        }
+
+        private static void SetMetalRoughControlState(ComboBox? combo, Button? button, bool enabled)
+        {
+            if (combo != null)
+                combo.Enabled = enabled;
+            if (button != null)
+                button.Enabled = enabled;
+        }
+
+        private void SyncUseCombinedMR(bool useCombined)
+        {
+            if (useCombinedMRCheckBox != null && useCombinedMRCheckBox.Checked != useCombined)
+                useCombinedMRCheckBox.Checked = useCombined;
+            UpdateMetalRoughUiState();
         }
 
         private bool TryGetCurrentMaterial(out Material material, out string relPath)
