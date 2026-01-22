@@ -24,6 +24,11 @@ namespace GameEngine.Engine
             Camera camera
         )
         {
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
+
             lightManager.lights = gameObjectManager.GetAllComponents<Light>();
             lightManager.UploadLights();
 
