@@ -22,10 +22,14 @@ uniform sampler2D roughnessTexture;
 uniform sampler2D aoTexture;
 uniform sampler2D normalTexture;
 uniform int useCombinedMR;
+uniform sampler2D environmentMap;
+uniform sampler2D brdfLut;
+uniform int useEnvironmentMap;
 
 uniform sampler2D shadowMap;
 
 uniform float ambientIntensity;
+uniform float iblSpecularIntensity;
 uniform int lightCount;
 uniform vec3 viewPos;
 
@@ -101,6 +105,20 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+vec3 FresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+    vec3 oneMinusRoughness = vec3(1.0 - roughness);
+    return F0 + (max(oneMinusRoughness, F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec2 EnvMapUV(vec3 dir)
+{
+    vec3 d = normalize(dir);
+    float u = atan(d.z, d.x) / (2.0 * PI) + 0.5;
+    float v = asin(clamp(d.y, -1.0, 1.0)) / PI + 0.5;
+    return vec2(u, v);
+}
+
 mat3 CotangentFrame(vec3 N, vec3 p, vec2 uv)
 {
     vec3 dp1 = dFdx(p);
@@ -154,6 +172,8 @@ void main()
     vec3 mapN = texture(normalTexture, texCoord).xyz * 2.0 - 1.0;
     N = normalize(CotangentFrame(N, fragPos, texCoord) * mapN);
     vec3 V = normalize(viewPos - fragPos);
+    float NdotV = max(dot(N, V), 0.0);
+    vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
     vec3 Lo = vec3(0.0);
 
@@ -201,10 +221,8 @@ void main()
         vec3 radiance = lightColor * intensity * attenuation;
 
         vec3 H = normalize(V + L);
-        float NdotV = max(dot(N, V), 0.0);
         float HdotV = max(dot(H, V), 0.0);
 
-        vec3 F0 = mix(vec3(0.04), albedo, metallic);
         float D = DistributionGGX(N, H, roughness);
         float G = GeometrySmith(N, V, L, roughness);
         vec3  F = FresnelSchlick(HdotV, F0);
@@ -221,5 +239,20 @@ void main()
     }
 
     vec3 ambient = albedo * ambientIntensity * ao;
+    if (useEnvironmentMap == 1)
+    {
+        float maxLod = float(textureQueryLevels(environmentMap) - 1);
+        vec3 R = reflect(-V, N);
+        vec3 diffuseIbl = textureLod(environmentMap, EnvMapUV(N), maxLod).rgb;
+        vec3 specIbl = textureLod(environmentMap, EnvMapUV(R), roughness * maxLod).rgb * iblSpecularIntensity;
+
+        vec2 brdf = texture(brdfLut, vec2(NdotV, roughness)).rg;
+        vec3 F = FresnelSchlickRoughness(NdotV, F0, roughness);
+        vec3 kS = F;
+        vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+        vec3 specular = specIbl * (F0 * brdf.x + brdf.y);
+
+        ambient = (kD * albedo * diffuseIbl + specular) * ambientIntensity * ao;
+    }
     FragColor = vec4(ambient + Lo, 1.0);
 }

@@ -38,6 +38,10 @@ namespace GameEngine.Engine {
             dto.SkyboxColorR = gameScene.skyboxColor.R;
             dto.SkyboxColorG = gameScene.skyboxColor.G;
             dto.SkyboxColorB = gameScene.skyboxColor.B;
+            dto.SkyboxHdrPath = gameScene.skyboxHdrPath;
+            dto.SkyboxExposure = gameScene.skyboxExposure;
+            dto.SkyboxFlipV = gameScene.skyboxFlipV;
+            dto.IblSpecularIntensity = gameScene.iblSpecularIntensity;
 
             string json = JsonSerializer.Serialize(dto, Options);
             File.WriteAllText(savePath, json);
@@ -85,6 +89,10 @@ namespace GameEngine.Engine {
 
             gameScene.ambientLightIntensity = dto.AmbientLightIntensity;
             gameScene.skyboxColor = Color.FromArgb(255, dto.SkyboxColorR, dto.SkyboxColorG, dto.SkyboxColorB);
+            gameScene.skyboxHdrPath = dto.SkyboxHdrPath;
+            gameScene.skyboxExposure = dto.SkyboxExposure;
+            gameScene.skyboxFlipV = dto.SkyboxFlipV;
+            gameScene.iblSpecularIntensity = dto.IblSpecularIntensity;
             gameScene.relPath = dto.RelPath;
         }
 
@@ -170,6 +178,11 @@ namespace GameEngine.Engine {
         public int SkyboxColorR { get; set; }
         public int SkyboxColorG { get; set; }
         public int SkyboxColorB { get; set; }
+
+        public string? SkyboxHdrPath { get; set; }
+        public float SkyboxExposure { get; set; } = 1.0f;
+        public bool SkyboxFlipV { get; set; }
+        public float IblSpecularIntensity { get; set; } = 0.5f;
 
         public List<GameObjectDto> GameObjects { get; set; } = new();
     }

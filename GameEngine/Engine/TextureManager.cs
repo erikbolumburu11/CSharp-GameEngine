@@ -6,6 +6,7 @@ namespace GameEngine.Engine
     public class TextureManager : IDisposable
     {
         readonly Dictionary<TextureKey, Texture> textures;
+        readonly Dictionary<string, Texture> hdrTextures;
 
         public Texture White { get; private set; }
         public Texture Grey { get; private set; }
@@ -22,6 +23,7 @@ namespace GameEngine.Engine
         public TextureManager()
         {
             textures = new Dictionary<TextureKey, Texture>();
+            hdrTextures = new Dictionary<string, Texture>(StringComparer.OrdinalIgnoreCase);
         }
 
         public void InitializeDefaultTextures()
@@ -104,6 +106,65 @@ namespace GameEngine.Engine
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
 
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+
+            return new Texture(handle, width, height);
+        }
+
+        public Texture GetHdr(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                return Black;
+
+            if (ProjectContext.Current == null)
+                return Black;
+
+            string absPath = Path.IsPathRooted(path)
+                ? Path.GetFullPath(path)
+                : Path.GetFullPath(Path.Combine(ProjectContext.Current.RootPath, path));
+
+            if (hdrTextures.TryGetValue(absPath, out var tex))
+                return tex;
+
+            tex = LoadHdrFromFile(absPath);
+            hdrTextures[absPath] = tex;
+            return tex;
+        }
+
+        public static Texture LoadHdrFromFile(string imagePath)
+        {
+            int handle = GL.GenTexture();
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+
+            StbImage.stbi_set_flip_vertically_on_load(0);
+
+            int width;
+            int height;
+
+            using (Stream stream = File.OpenRead(imagePath))
+            {
+                ImageResultFloat image = ImageResultFloat.FromStream(stream, ColorComponents.RedGreenBlue);
+                GL.TexImage2D(
+                    TextureTarget.Texture2D,
+                    0,
+                    PixelInternalFormat.Rgb16f,
+                    image.Width,
+                    image.Height,
+                    0,
+                    PixelFormat.Rgb,
+                    PixelType.Float,
+                    image.Data
+                );
+                width = image.Width;
+                height = image.Height;
+            }
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
 
             return new Texture(handle, width, height);
