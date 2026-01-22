@@ -97,15 +97,13 @@ namespace GameEngine.Engine
 
                 bool useEnvironmentMap = false;
                 Texture environmentTexture = textureManager.Black;
-                if (!string.IsNullOrWhiteSpace(scene.skyboxHdrPath) && ProjectContext.Current != null)
+                if (scene.skyboxHdrGuid.HasValue && scene.skyboxHdrGuid.Value != Guid.Empty)
                 {
-                    string hdrPath = scene.skyboxHdrPath;
-                    string absHdrPath = System.IO.Path.IsPathRooted(hdrPath)
-                        ? hdrPath
-                        : ProjectContext.Current.Paths.ToAbsolute(hdrPath);
-                    if (System.IO.File.Exists(absHdrPath))
+                    Guid hdrGuid = scene.skyboxHdrGuid.Value;
+                    if (AssetDatabase.TryGetPath(hdrGuid, out var absHdrPath)
+                        && System.IO.File.Exists(absHdrPath))
                     {
-                        environmentTexture = textureManager.GetHdr(hdrPath);
+                        environmentTexture = textureManager.GetHdr(absHdrPath);
                         useEnvironmentMap = true;
                     }
                 }

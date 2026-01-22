@@ -60,7 +60,7 @@ namespace GameEngine.Editor
             {
                 ReadOnly = true,
                 Width = 260,
-                Text = scene.skyboxHdrPath ?? string.Empty
+                Text = string.Empty
             };
 
             Button skyboxHdrBrowseButton = new Button
@@ -74,6 +74,45 @@ namespace GameEngine.Editor
                 Text = "Clear",
                 Width = 150
             };
+
+            void RefreshSkyboxHdrText()
+            {
+                if (!scene.skyboxHdrGuid.HasValue || scene.skyboxHdrGuid.Value == Guid.Empty)
+                {
+                    skyboxHdrTextBox.Text = string.Empty;
+                    return;
+                }
+
+                if (ProjectContext.Current != null)
+                {
+                    string assetRoot = ProjectContext.Current.Paths.AssetRootAbsolute;
+                    if (Directory.Exists(assetRoot))
+                        AssetDatabase.ScanAssets(assetRoot);
+                }
+
+                if (AssetDatabase.TryGetPath(scene.skyboxHdrGuid.Value, out var absPath))
+                {
+                    if (ProjectContext.Current != null)
+                    {
+                        try
+                        {
+                            skyboxHdrTextBox.Text = ProjectContext.Current.Paths.ToProjectRelative(absPath);
+                            return;
+                        }
+                        catch
+                        {
+                            // Fall back to absolute path.
+                        }
+                    }
+
+                    skyboxHdrTextBox.Text = absPath;
+                    return;
+                }
+
+                skyboxHdrTextBox.Text = scene.skyboxHdrGuid.Value.ToString();
+            }
+
+            RefreshSkyboxHdrText();
 
             skyboxHdrBrowseButton.Click += (s, e) =>
             {
@@ -97,8 +136,15 @@ namespace GameEngine.Editor
 
                 try
                 {
-                    string relPath = ProjectContext.Current.Paths.ToProjectRelative(ofd.FileName);
-                    scene.skyboxHdrPath = relPath;
+                    string absPath = Path.GetFullPath(ofd.FileName);
+                    string relPath = ProjectContext.Current.Paths.ToAssetRelative(absPath);
+
+                    string assetRoot = ProjectContext.Current.Paths.AssetRootAbsolute;
+                    if (Directory.Exists(assetRoot))
+                        AssetDatabase.ScanAssets(assetRoot);
+
+                    Guid guid = AssetDatabase.PathToGuid(absPath);
+                    scene.skyboxHdrGuid = guid;
                     skyboxHdrTextBox.Text = relPath;
                 }
                 catch (Exception ex)
@@ -115,7 +161,7 @@ namespace GameEngine.Editor
 
             skyboxHdrClearButton.Click += (s, e) =>
             {
-                scene.skyboxHdrPath = null;
+                scene.skyboxHdrGuid = null;
                 skyboxHdrTextBox.Text = string.Empty;
             };
 

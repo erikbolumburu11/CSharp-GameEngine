@@ -17,20 +17,18 @@ namespace GameEngine.Engine
             Matrix4 projection
         )
         {
-            if (string.IsNullOrWhiteSpace(scene.skyboxHdrPath) || ProjectContext.Current == null)
+            if (!scene.skyboxHdrGuid.HasValue || scene.skyboxHdrGuid.Value == Guid.Empty)
                 return;
 
-            string relPath = scene.skyboxHdrPath;
-            string absPath = System.IO.Path.IsPathRooted(relPath)
-                ? relPath
-                : ProjectContext.Current.Paths.ToAbsolute(relPath);
+            if (!AssetDatabase.TryGetPath(scene.skyboxHdrGuid.Value, out var absPath))
+                return;
 
             if (!System.IO.File.Exists(absPath))
                 return;
 
             EnsureResources(shaderManager);
 
-            Texture hdr = textureManager.GetHdr(relPath);
+            Texture hdr = textureManager.GetHdr(absPath);
             Matrix4 viewNoTranslation = new Matrix4(new Matrix3(view));
 
             GL.DepthFunc(DepthFunction.Lequal);
