@@ -18,15 +18,18 @@ namespace GameEngine.Editor
         private ComboBox roughnessTextureComboBox;
         private ComboBox aoTextureComboBox;
         private ComboBox normalTextureComboBox;
+        private ComboBox heightTextureComboBox;
         private Button diffuseTextureBrowseButton;
         private Button metallicRoughnessTextureBrowseButton;
         private Button metallicTextureBrowseButton;
         private Button roughnessTextureBrowseButton;
         private Button aoTextureBrowseButton;
         private Button normalTextureBrowseButton;
+        private Button heightTextureBrowseButton;
         private CheckBox useCombinedMRCheckBox;
         private Vector2Control uvTilingControl;
         private Vector2Control uvOffsetControl;
+        private FloatControl heightScaleControl;
         private Material? currentMaterial;
         private string? currentMaterialPath;
         private const string NoTextureLabel = "(None)";
@@ -91,6 +94,8 @@ namespace GameEngine.Editor
             AddSection(BuildMetallicRoughnessModeEditor());
             AddSection(BuildAoTextureEditor());
             AddSection(BuildNormalTextureEditor());
+            AddSection(BuildHeightTextureEditor());
+            AddSection(BuildHeightScaleEditor());
             AddSection(BuildUvEditor());
             AddSeparator();
         }
@@ -279,6 +284,75 @@ namespace GameEngine.Editor
                 OnNormalTextureSelectionChanged,
                 OnNormalTextureBrowseClicked
             );
+        }
+
+        private Control BuildHeightTextureEditor()
+        {
+            return BuildTextureComboEditor(
+                "Height Texture",
+                out heightTextureComboBox,
+                out heightTextureBrowseButton,
+                OnHeightTextureSelectionChanged,
+                OnHeightTextureBrowseClicked
+            );
+        }
+
+        private Control BuildHeightScaleEditor()
+        {
+            var section = new Panel
+            {
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 2, 0, 2),
+                Padding = Padding.Empty
+            };
+
+            var headerLabel = new Label
+            {
+                Text = "Parallax",
+                Font = new Font(Font, FontStyle.Bold),
+                AutoSize = true,
+                Margin = new Padding(0, 4, 0, 2),
+                Dock = DockStyle.Top
+            };
+            section.Controls.Add(headerLabel);
+
+            var layout = new TableLayoutPanel
+            {
+                ColumnCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = Padding.Empty,
+                Padding = Padding.Empty
+            };
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+
+            var scaleLabel = new Label
+            {
+                Text = "Height Scale",
+                AutoSize = true,
+                Margin = new Padding(0, 4, 2, 0)
+            };
+
+            heightScaleControl = new FloatControl
+            {
+                Margin = Padding.Empty
+            };
+            heightScaleControl.ValueChanged += _ => OnHeightScaleChanged();
+
+            layout.Controls.Add(scaleLabel, 0, 0);
+            layout.Controls.Add(heightScaleControl, 1, 0);
+
+            section.Controls.Add(layout);
+            section.Controls.SetChildIndex(layout, 0);
+
+            section.Resize += (s, e) => layout.Width = section.ClientSize.Width;
+            layout.Width = section.ClientSize.Width;
+
+            return section;
         }
 
         private Control BuildTextureComboEditor(
@@ -513,6 +587,8 @@ namespace GameEngine.Editor
                 SetTextureSelection(roughnessTextureComboBox, null);
                 SetTextureSelection(aoTextureComboBox, null);
                 SetTextureSelection(normalTextureComboBox, null);
+                SetTextureSelection(heightTextureComboBox, null);
+                SetHeightScaleValue(0f);
                 if (useCombinedMRCheckBox != null)
                     useCombinedMRCheckBox.Checked = false;
                 UpdateMetalRoughUiState();
@@ -531,6 +607,8 @@ namespace GameEngine.Editor
             SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
             SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
             SetTextureSelection(normalTextureComboBox, currentMaterial.normalTexGuid);
+            SetTextureSelection(heightTextureComboBox, currentMaterial.heightTexGuid);
+            SetHeightScaleValue(currentMaterial.heightScale);
             if (useCombinedMRCheckBox != null)
                 useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
             UpdateMetalRoughUiState();
@@ -761,6 +839,50 @@ namespace GameEngine.Editor
             SetTextureSelection(normalTextureComboBox, guid);
         }
 
+        private void OnHeightTextureSelectionChanged(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.heightTexGuid = GetSelectedTexture(heightTextureComboBox);
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
+        private void OnHeightTextureBrowseClicked(object? sender, EventArgs e)
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            string? relPath = BrowseForTexture("Select Height Texture");
+            if (string.IsNullOrWhiteSpace(relPath))
+                return;
+
+            if (!TryGetGuidFromPath(relPath, out var guid))
+            {
+                MessageBox.Show(
+                    this,
+                    "Could not resolve a GUID for the selected texture.",
+                    "Texture Not Indexed",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+                return;
+            }
+
+            material.heightTexGuid = guid;
+            MaterialSerializer.SaveMaterial(material, path);
+            SetTextureSelection(heightTextureComboBox, guid);
+        }
+
+        private void OnHeightScaleChanged()
+        {
+            if (!TryGetCurrentMaterial(out var material, out var path))
+                return;
+
+            material.heightScale = heightScaleControl.Value;
+            MaterialSerializer.SaveMaterial(material, path);
+        }
+
         public void RefreshMaterialListFromEditor()
         {
             RefreshMaterialList();
@@ -807,6 +929,8 @@ namespace GameEngine.Editor
                 || roughnessTextureComboBox == null
                 || aoTextureComboBox == null
                 || normalTextureComboBox == null
+                || heightTextureComboBox == null
+                || heightScaleControl == null
                 || useCombinedMRCheckBox == null)
                 return;
 
@@ -816,6 +940,7 @@ namespace GameEngine.Editor
             RefreshTextureCombo(roughnessTextureComboBox);
             RefreshTextureCombo(aoTextureComboBox);
             RefreshTextureCombo(normalTextureComboBox);
+            RefreshTextureCombo(heightTextureComboBox);
 
             if (currentMaterial != null)
             {
@@ -825,14 +950,17 @@ namespace GameEngine.Editor
                 SetTextureSelection(roughnessTextureComboBox, currentMaterial.roughnessTexGuid);
                 SetTextureSelection(aoTextureComboBox, currentMaterial.aoTexGuid);
                 SetTextureSelection(normalTextureComboBox, currentMaterial.normalTexGuid);
+                SetTextureSelection(heightTextureComboBox, currentMaterial.heightTexGuid);
                 useCombinedMRCheckBox.Checked = currentMaterial.useCombinedMR;
                 SetUvControlsEnabled(true);
                 SetUvValues(currentMaterial.uvTiling, currentMaterial.uvOffset);
+                SetHeightScaleValue(currentMaterial.heightScale);
             }
             else
             {
                 SetUvControlsEnabled(false);
                 SetUvValues(new Vector2(1f, 1f), new Vector2(0f, 0f));
+                SetHeightScaleValue(0f);
             }
 
             UpdateMetalRoughUiState();
@@ -1073,6 +1201,14 @@ namespace GameEngine.Editor
 
             uvTilingControl.Value = tiling;
             uvOffsetControl.Value = offset;
+        }
+
+        private void SetHeightScaleValue(float scale)
+        {
+            if (heightScaleControl == null)
+                return;
+
+            heightScaleControl.Value = scale;
         }
 
         private void SetUvControlsEnabled(bool enabled)

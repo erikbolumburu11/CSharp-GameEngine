@@ -95,6 +95,10 @@ namespace GameEngine.Engine
                 material.GetNormal(textureManager).Use(TextureUnit.Texture6);
                 shader.SetInt("normalTexture", 6);
 
+                material.GetHeight(textureManager).Use(TextureUnit.Texture9);
+                shader.SetInt("heightTexture", 9);
+                shader.SetFloat("heightScale", material.heightScale);
+
                 bool useEnvironmentMap = false;
                 Texture environmentTexture = textureManager.Black;
                 if (scene.skyboxHdrGuid.HasValue && scene.skyboxHdrGuid.Value != Guid.Empty)

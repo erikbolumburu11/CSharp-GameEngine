@@ -12,6 +12,7 @@ namespace GameEngine.Engine
         Guid? roughnessTexGuid,
         Guid? aoTexGuid,
         Guid? normalTexGuid,
+        Guid? heightTexGuid,
         bool? useCombinedMR,
         TextureColorSpace? diffuseColorSpace,
         TextureColorSpace? specularColorSpace,
@@ -20,6 +21,8 @@ namespace GameEngine.Engine
         TextureColorSpace? roughnessColorSpace,
         TextureColorSpace? aoColorSpace,
         TextureColorSpace? normalColorSpace,
+        TextureColorSpace? heightColorSpace,
+        float? heightScale,
         float[] uvTiling,
         float[] uvOffset
     );
@@ -35,6 +38,7 @@ namespace GameEngine.Engine
         public Guid? roughnessTexGuid;
         public Guid? aoTexGuid;
         public Guid? normalTexGuid;
+        public Guid? heightTexGuid;
         public bool useCombinedMR;
         public TextureColorSpace diffuseColorSpace = TextureColorSpace.Srgb;
         public TextureColorSpace specularColorSpace = TextureColorSpace.Linear;
@@ -43,6 +47,8 @@ namespace GameEngine.Engine
         public TextureColorSpace roughnessColorSpace = TextureColorSpace.Linear;
         public TextureColorSpace aoColorSpace = TextureColorSpace.Linear;
         public TextureColorSpace normalColorSpace = TextureColorSpace.Linear;
+        public TextureColorSpace heightColorSpace = TextureColorSpace.Linear;
+        public float heightScale = 0f;
 
         public Vector2 uvTiling = new(1f, 1f);
         public Vector2 uvOffset = new(0f, 0f);
@@ -146,6 +152,29 @@ namespace GameEngine.Engine
                 MaterialSerializer.SaveMaterial(this, relPath);
 
             return textureManager.FlatNormal;
+        }
+
+        public Texture GetHeight(TextureManager textureManager)
+        {
+            if (heightTexGuid is null || heightTexGuid.Value == Guid.Empty)
+                return textureManager.HeightDefault;
+
+            if (TryResolveTexture(
+                textureManager,
+                heightTexGuid.Value,
+                heightColorSpace,
+                textureManager.HeightDefault,
+                out var tex))
+            {
+                return tex;
+            }
+
+            heightTexGuid = null;
+
+            if (!string.IsNullOrWhiteSpace(relPath))
+                MaterialSerializer.SaveMaterial(this, relPath);
+
+            return textureManager.HeightDefault;
         }
 
         public Texture GetMetallic(TextureManager textureManager)
@@ -256,6 +285,7 @@ namespace GameEngine.Engine
             roughnessTexGuid: roughnessTexGuid,
             aoTexGuid: aoTexGuid,
             normalTexGuid: normalTexGuid,
+            heightTexGuid: heightTexGuid,
             useCombinedMR: useCombinedMR,
             diffuseColorSpace: diffuseColorSpace,
             specularColorSpace: specularColorSpace,
@@ -264,6 +294,8 @@ namespace GameEngine.Engine
             roughnessColorSpace: roughnessColorSpace,
             aoColorSpace: aoColorSpace,
             normalColorSpace: normalColorSpace,
+            heightColorSpace: heightColorSpace,
+            heightScale: heightScale,
             uvTiling: new[] { uvTiling.X, uvTiling.Y },
             uvOffset: new[] { uvOffset.X, uvOffset.Y }
         );
@@ -277,6 +309,7 @@ namespace GameEngine.Engine
             roughnessTexGuid = dto.roughnessTexGuid;
             aoTexGuid = dto.aoTexGuid;
             normalTexGuid = dto.normalTexGuid;
+            heightTexGuid = dto.heightTexGuid;
             useCombinedMR = dto.useCombinedMR
                 ?? (metallicRoughnessTexGuid is not null && metallicRoughnessTexGuid.Value != Guid.Empty);
             diffuseColorSpace = dto.diffuseColorSpace ?? TextureColorSpace.Srgb;
@@ -286,6 +319,8 @@ namespace GameEngine.Engine
             roughnessColorSpace = dto.roughnessColorSpace ?? TextureColorSpace.Linear;
             aoColorSpace = dto.aoColorSpace ?? TextureColorSpace.Linear;
             normalColorSpace = dto.normalColorSpace ?? TextureColorSpace.Linear;
+            heightColorSpace = dto.heightColorSpace ?? TextureColorSpace.Linear;
+            heightScale = dto.heightScale ?? 0f;
 
             if (dto.uvTiling is { Length: >= 2 })
                 uvTiling = new Vector2(dto.uvTiling[0], dto.uvTiling[1]);

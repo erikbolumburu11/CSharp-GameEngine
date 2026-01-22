@@ -19,6 +19,7 @@ namespace GameEngine.Engine
         public Texture AmbientOcclusionDefault { get; private set; }
         public Texture MetallicDefault { get; private set; }
         public Texture RoughnessDefault { get; private set; }
+        public Texture HeightDefault { get; private set; }
 
         public TextureManager()
         {
@@ -41,6 +42,7 @@ namespace GameEngine.Engine
             AmbientOcclusionDefault = Create1x1(255, 255, 255, 255, TextureColorSpace.Linear);
             MetallicDefault = Create1x1(0, 0, 0, 255, TextureColorSpace.Linear);
             RoughnessDefault = Create1x1(128, 128, 128, 255, TextureColorSpace.Linear);
+            HeightDefault = Create1x1(0, 0, 0, 255, TextureColorSpace.Linear);
         }
 
         public void Dispose()

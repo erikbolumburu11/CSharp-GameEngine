@@ -21,7 +21,9 @@ uniform sampler2D metallicTexture;
 uniform sampler2D roughnessTexture;
 uniform sampler2D aoTexture;
 uniform sampler2D normalTexture;
+uniform sampler2D heightTexture;
 uniform int useCombinedMR;
+uniform float heightScale;
 uniform sampler2D environmentMap;
 uniform sampler2D brdfLut;
 uniform int useEnvironmentMap;
@@ -41,6 +43,8 @@ in vec4 fragPosLightSpace;
 out vec4 FragColor;
 
 const float PI = 3.14159265359;
+const float MinParallaxLayers = 8.0;
+const float MaxParallaxLayers = 32.0;
 
 float ShadowFactor(vec4 fragPosLS, vec3 normal, vec3 lightDir)
 {
@@ -135,6 +139,34 @@ mat3 CotangentFrame(vec3 N, vec3 p, vec2 uv)
     return mat3(T * invMax, B * invMax, N);
 }
 
+vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
+{
+    float ndotv = abs(viewDirTangent.z);
+    float numLayers = mix(MaxParallaxLayers, MinParallaxLayers, ndotv);
+    float layerDepth = 1.0 / numLayers;
+    float currentLayerDepth = 0.0;
+
+    vec2 P = viewDirTangent.xy / max(viewDirTangent.z, 0.001) * heightScale;
+    vec2 deltaTexCoords = P / numLayers;
+
+    vec2 currentTexCoords = texCoords;
+    float currentDepthMapValue = 1.0 - texture(heightTexture, currentTexCoords).r;
+
+    while (currentLayerDepth < currentDepthMapValue)
+    {
+        currentTexCoords -= deltaTexCoords;
+        currentDepthMapValue = 1.0 - texture(heightTexture, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+    }
+
+    vec2 prevTexCoords = currentTexCoords + deltaTexCoords;
+    float prevDepth = 1.0 - texture(heightTexture, prevTexCoords).r;
+    float afterDepth = currentDepthMapValue - currentLayerDepth;
+    float beforeDepth = prevDepth - (currentLayerDepth - layerDepth);
+    float weight = afterDepth / (afterDepth - beforeDepth);
+    return mix(currentTexCoords, prevTexCoords, clamp(weight, 0.0, 1.0));
+}
+
 void main()
 {
 #if DEBUG_OUTPUT_SHADOWMAP
@@ -149,29 +181,42 @@ void main()
     return;
 #endif
 
-    vec3 albedo = texture(diffuseTexture, texCoord).rgb;
+    vec3 N = normalize(normal);
+    mat3 TBN = CotangentFrame(N, fragPos, texCoord);
+    vec3 V = normalize(viewPos - fragPos);
+    vec3 viewDirTangent = normalize(transpose(TBN) * V);
+
+    vec2 tiledTexCoord = texCoord;
+    vec2 localTexCoord = fract(tiledTexCoord);
+    vec2 tileOffset = tiledTexCoord - localTexCoord;
+
+    vec2 parallaxLocal = localTexCoord;
+    if (heightScale > 0.0001)
+        parallaxLocal = ParallaxOcclusionMapping(localTexCoord, viewDirTangent);
+
+    vec2 parallaxTexCoord = parallaxLocal + tileOffset;
+
+    vec3 albedo = texture(diffuseTexture, parallaxTexCoord).rgb;
     float metallic;
     float roughness;
     if (useCombinedMR == 1)
     {
-        vec4 mrSample = texture(metallicRoughnessTexture, texCoord);
+        vec4 mrSample = texture(metallicRoughnessTexture, parallaxTexCoord);
         metallic = mrSample.b;
         roughness = mrSample.g;
     }
     else
     {
-        metallic = texture(metallicTexture, texCoord).r;
-        roughness = texture(roughnessTexture, texCoord).r;
+        metallic = texture(metallicTexture, parallaxTexCoord).r;
+        roughness = texture(roughnessTexture, parallaxTexCoord).r;
     }
 
     metallic = clamp(metallic, 0.0, 1.0);
     roughness = clamp(roughness, 0.04, 1.0);
-    float ao = texture(aoTexture, texCoord).r;
+    float ao = texture(aoTexture, parallaxTexCoord).r;
 
-    vec3 N = normalize(normal);
-    vec3 mapN = texture(normalTexture, texCoord).xyz * 2.0 - 1.0;
-    N = normalize(CotangentFrame(N, fragPos, texCoord) * mapN);
-    vec3 V = normalize(viewPos - fragPos);
+    vec3 mapN = texture(normalTexture, parallaxTexCoord).xyz * 2.0 - 1.0;
+    N = normalize(TBN * mapN);
     float NdotV = max(dot(N, V), 0.0);
     vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
