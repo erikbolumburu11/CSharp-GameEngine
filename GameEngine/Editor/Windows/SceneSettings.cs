@@ -33,7 +33,7 @@ namespace GameEngine.Editor
 
             Label skyboxColorLabel = new Label
             {
-                Text = "skyboxColorLabel"
+                Text = "Skybox Color:"
             };
 
             ColorDialog skyboxColorDialog = new();
@@ -51,10 +51,174 @@ namespace GameEngine.Editor
                 }
             };
 
+            Label skyboxHdrLabel = new Label
+            {
+                Text = "Skybox HDR:"
+            };
+
+            TextBox skyboxHdrTextBox = new TextBox
+            {
+                ReadOnly = true,
+                Width = 260,
+                Text = string.Empty
+            };
+
+            Button skyboxHdrBrowseButton = new Button
+            {
+                Text = "Browse...",
+                Width = 150
+            };
+
+            Button skyboxHdrClearButton = new Button
+            {
+                Text = "Clear",
+                Width = 150
+            };
+
+            void RefreshSkyboxHdrText()
+            {
+                if (!scene.skyboxHdrGuid.HasValue || scene.skyboxHdrGuid.Value == Guid.Empty)
+                {
+                    skyboxHdrTextBox.Text = string.Empty;
+                    return;
+                }
+
+                if (ProjectContext.Current != null)
+                {
+                    string assetRoot = ProjectContext.Current.Paths.AssetRootAbsolute;
+                    if (Directory.Exists(assetRoot))
+                        AssetDatabase.ScanAssets(assetRoot);
+                }
+
+                if (AssetDatabase.TryGetPath(scene.skyboxHdrGuid.Value, out var absPath))
+                {
+                    if (ProjectContext.Current != null)
+                    {
+                        try
+                        {
+                            skyboxHdrTextBox.Text = ProjectContext.Current.Paths.ToProjectRelative(absPath);
+                            return;
+                        }
+                        catch
+                        {
+                            // Fall back to absolute path.
+                        }
+                    }
+
+                    skyboxHdrTextBox.Text = absPath;
+                    return;
+                }
+
+                skyboxHdrTextBox.Text = scene.skyboxHdrGuid.Value.ToString();
+            }
+
+            RefreshSkyboxHdrText();
+
+            skyboxHdrBrowseButton.Click += (s, e) =>
+            {
+                if (ProjectContext.Current == null)
+                    return;
+
+                string texturesDir = Path.Combine(ProjectContext.Current.Paths.AssetRootAbsolute, "Textures");
+                Directory.CreateDirectory(texturesDir);
+
+                using var ofd = new OpenFileDialog
+                {
+                    Title = "Select Skybox HDR",
+                    Filter = "HDR Image (*.hdr)|*.hdr|All files (*.*)|*.*",
+                    CheckFileExists = true,
+                    Multiselect = false,
+                    InitialDirectory = texturesDir
+                };
+
+                if (ofd.ShowDialog(this) != DialogResult.OK)
+                    return;
+
+                try
+                {
+                    string absPath = Path.GetFullPath(ofd.FileName);
+                    string relPath = ProjectContext.Current.Paths.ToAssetRelative(absPath);
+
+                    string assetRoot = ProjectContext.Current.Paths.AssetRootAbsolute;
+                    if (Directory.Exists(assetRoot))
+                        AssetDatabase.ScanAssets(assetRoot);
+
+                    Guid guid = AssetDatabase.PathToGuid(absPath);
+                    scene.skyboxHdrGuid = guid;
+                    skyboxHdrTextBox.Text = relPath;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(
+                        this,
+                        ex.Message,
+                        "Invalid HDR Path",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning
+                    );
+                }
+            };
+
+            skyboxHdrClearButton.Click += (s, e) =>
+            {
+                scene.skyboxHdrGuid = null;
+                skyboxHdrTextBox.Text = string.Empty;
+            };
+
+            Label skyboxExposureLabel = new Label
+            {
+                Text = "Skybox Exposure:"
+            };
+
+            TextBox skyboxExposureTextBox = new TextBox
+            {
+                Text = scene.skyboxExposure.ToString()
+            };
+            skyboxExposureTextBox.TextChanged += (s, e) =>
+            {
+                if (float.TryParse(skyboxExposureTextBox.Text, out float value))
+                    scene.skyboxExposure = Math.Max(0.0f, value);
+            };
+
+            Label iblSpecularIntensityLabel = new Label
+            {
+                Text = "IBL Specular Intensity:"
+            };
+
+            TextBox iblSpecularIntensityTextBox = new TextBox
+            {
+                Text = scene.iblSpecularIntensity.ToString()
+            };
+            iblSpecularIntensityTextBox.TextChanged += (s, e) =>
+            {
+                if (float.TryParse(iblSpecularIntensityTextBox.Text, out float value))
+                    scene.iblSpecularIntensity = Math.Max(0.0f, value);
+            };
+
+            CheckBox skyboxFlipVCheckBox = new CheckBox
+            {
+                Text = "Flip Skybox V",
+                Checked = scene.skyboxFlipV,
+                AutoSize = true
+            };
+            skyboxFlipVCheckBox.CheckedChanged += (s, e) =>
+            {
+                scene.skyboxFlipV = skyboxFlipVCheckBox.Checked;
+            };
+
             layout.Controls.Add(ambientLightIntensityLabel);
             layout.Controls.Add(ambientLightIntensityTextBox);
             layout.Controls.Add(skyboxColorLabel);
             layout.Controls.Add(skyBoxColorButton);
+            layout.Controls.Add(skyboxHdrLabel);
+            layout.Controls.Add(skyboxHdrTextBox);
+            layout.Controls.Add(skyboxHdrBrowseButton);
+            layout.Controls.Add(skyboxHdrClearButton);
+            layout.Controls.Add(skyboxExposureLabel);
+            layout.Controls.Add(skyboxExposureTextBox);
+            layout.Controls.Add(iblSpecularIntensityLabel);
+            layout.Controls.Add(iblSpecularIntensityTextBox);
+            layout.Controls.Add(skyboxFlipVCheckBox);
         }
     }
 }
