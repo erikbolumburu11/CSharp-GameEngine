@@ -38,6 +38,11 @@ namespace GameEngine.Engine {
             dto.SkyboxColorR = gameScene.skyboxColor.R;
             dto.SkyboxColorG = gameScene.skyboxColor.G;
             dto.SkyboxColorB = gameScene.skyboxColor.B;
+            if (gameScene.skyboxHdrGuid.HasValue && gameScene.skyboxHdrGuid.Value != Guid.Empty)
+                dto.SkyboxHdrGuid = gameScene.skyboxHdrGuid.Value;
+            dto.SkyboxExposure = gameScene.skyboxExposure;
+            dto.SkyboxFlipV = gameScene.skyboxFlipV;
+            dto.IblSpecularIntensity = gameScene.iblSpecularIntensity;
 
             string json = JsonSerializer.Serialize(dto, Options);
             File.WriteAllText(savePath, json);
@@ -85,7 +90,39 @@ namespace GameEngine.Engine {
 
             gameScene.ambientLightIntensity = dto.AmbientLightIntensity;
             gameScene.skyboxColor = Color.FromArgb(255, dto.SkyboxColorR, dto.SkyboxColorG, dto.SkyboxColorB);
+            gameScene.skyboxHdrGuid = ResolveSkyboxGuid(dto);
+            gameScene.skyboxExposure = dto.SkyboxExposure;
+            gameScene.skyboxFlipV = dto.SkyboxFlipV;
+            gameScene.iblSpecularIntensity = dto.IblSpecularIntensity;
             gameScene.relPath = dto.RelPath;
+        }
+
+        private static Guid? ResolveSkyboxGuid(SceneDto dto)
+        {
+            if (dto.SkyboxHdrGuid.HasValue && dto.SkyboxHdrGuid.Value != Guid.Empty)
+                return dto.SkyboxHdrGuid.Value;
+
+            if (string.IsNullOrWhiteSpace(dto.SkyboxHdrPath))
+                return null;
+
+            if (ProjectContext.Current == null)
+                return null;
+
+            string absPath = Path.IsPathRooted(dto.SkyboxHdrPath)
+                ? Path.GetFullPath(dto.SkyboxHdrPath)
+                : ProjectContext.Current.Paths.ToAbsolute(dto.SkyboxHdrPath);
+
+            if (!File.Exists(absPath))
+                return null;
+
+            try
+            {
+                return AssetDatabase.PathToGuid(absPath);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static GameObjectDto ToDto(GameObject gameObject)
@@ -170,6 +207,15 @@ namespace GameEngine.Engine {
         public int SkyboxColorR { get; set; }
         public int SkyboxColorG { get; set; }
         public int SkyboxColorB { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Guid? SkyboxHdrGuid { get; set; }
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SkyboxHdrPath { get; set; }
+        public float SkyboxExposure { get; set; } = 1.0f;
+        public bool SkyboxFlipV { get; set; }
+        public float IblSpecularIntensity { get; set; } = 0.5f;
 
         public List<GameObjectDto> GameObjects { get; set; } = new();
     }

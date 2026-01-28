@@ -9,8 +9,9 @@ namespace GameEngine.Engine
         Matrix4 view;
         Matrix4 projection;
 
-        ShadowMap? shadowMap;
-        Shader? shadowDepthShader;
+        readonly ShadowPass shadowPass = new ShadowPass();
+        readonly SkyboxPass skyboxPass = new SkyboxPass();
+        readonly BrdfLutCache brdfLutCache = new BrdfLutCache();
 
         public void Render
         (
@@ -23,69 +24,35 @@ namespace GameEngine.Engine
             Camera camera
         )
         {
+            GL.Enable(EnableCap.DepthTest);
+            GL.DepthFunc(DepthFunction.Less);
+            GL.DepthMask(true);
+            GL.Disable(EnableCap.Blend);
+
             lightManager.lights = gameObjectManager.GetAllComponents<Light>();
             lightManager.UploadLights();
 
-            Matrix4 lightSpaceMatrix = Matrix4.Identity;
-
-            // Shadow Pass
-            Light? dirLight = lightManager.lights.FirstOrDefault(l => l.type == LightType.Directional);
-            bool hasShadowPass = dirLight != null;
-            if (dirLight != null)
-            {
-                Vector3 lightDir = Vector3.Transform(-Vector3.UnitZ, dirLight.gameObject.transform.WorldRotation).Normalized();
-                Vector3 sceneCenter = Vector3.Zero;
-                lightSpaceMatrix = CreateDirectionalLightSpaceMatrix(lightDir, sceneCenter);
-
-                shadowMap ??= new ShadowMap(2048);
-                shadowMap.BindForWriting();
-                GL.Clear(ClearBufferMask.DepthBufferBit);
-
-                GL.Disable(EnableCap.CullFace);
-                GL.CullFace(TriangleFace.Front);
-                GL.Enable(EnableCap.PolygonOffsetFill);
-                GL.PolygonOffset(2.0f, 4.0f); // tweak these
-
-                string depthVert = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.vert";
-                string depthFrag = Util.GetProjectDir() + "/Shaders/Depth/shadow_depth.frag";
-                shadowDepthShader ??= shaderManager.Get(depthVert, depthFrag);
-
-                shadowDepthShader.Use();
-                shadowDepthShader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
-
-                foreach (GameObject go in gameObjectManager.gameObjects)
-                {
-                    MeshRenderer? mr = go.GetComponent<MeshRenderer>();
-                    if (mr == null || mr.vao == null || mr.vertexCount <= 0) continue;
-
-                    Matrix4 model = CreateModelMatrix(go.transform);
-                    shadowDepthShader.SetMatrix4("model", model);
-
-                    mr.vao.Bind();
-                    GL.DrawArrays(PrimitiveType.Triangles, 0, mr.vertexCount);
-                    mr.vao.Unbind();
-                }
-            }
-
-            // Restore GL
-            GL.CullFace(TriangleFace.Back);
-            GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.PolygonOffsetFill);
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            bool hasShadowPass = shadowPass.Execute(
+                shaderManager,
+                gameObjectManager,
+                lightManager,
+                out Matrix4 lightSpaceMatrix
+            );
             GL.Viewport(0, 0, camera.Width, camera.Height);
 
 
             if (hasShadowPass)
-                shadowMap!.BindForReading(TextureUnit.Texture2);
+                shadowPass.BindForReading(TextureUnit.Texture3);
 
             view = camera.GetViewMatrix();
             projection = camera.GetProjectionMatrix(camera.Width, camera.Height);
+            skyboxPass.Render(textureManager, shaderManager, scene, view, projection);
             foreach (GameObject gameObject in gameObjectManager.gameObjects)
             {
                 MeshRenderer? meshRenderer = gameObject.GetComponent<MeshRenderer>();
                 if (meshRenderer == null || meshRenderer.vao == null || meshRenderer.vertexCount <= 0) continue;
 
-                Matrix4 model = CreateModelMatrix(gameObject.transform);
+                Matrix4 model = RenderMath.CreateModelMatrix(gameObject.transform);
                 Shader shader = meshRenderer.shader ??= shaderManager.Get(
                     meshRenderer.vertexShaderPath,
                     meshRenderer.fragmentShaderPath
@@ -100,11 +67,12 @@ namespace GameEngine.Engine
                 if (hasShadowPass)
                 {
                     shader.SetMatrix4("lightSpaceMatrix", lightSpaceMatrix);
-                    shader.SetInt("shadowMap", 2);
+                    shader.SetInt("shadowMap", 3);
                 }
 
                 shader.SetInt("lightCount", lightManager.lights.Count);
                 shader.SetFloat("ambientIntensity", scene.ambientLightIntensity);
+                shader.SetFloat("iblSpecularIntensity", scene.iblSpecularIntensity);
                 shader.SetVector3("viewPos", camera.position);
 
                 Material material = materialManager.Get(meshRenderer.material);
@@ -115,8 +83,49 @@ namespace GameEngine.Engine
                 material.GetDiffuse(textureManager).Use(TextureUnit.Texture0);
                 shader.SetInt("diffuseTexture", 0);
 
-                material.GetSpecular(textureManager).Use(TextureUnit.Texture1);
-                shader.SetInt("specularTexture", 1);
+                shader.SetInt("useCombinedMR", material.useCombinedMR ? 1 : 0);
+
+                material.GetMetallicRoughness(textureManager).Use(TextureUnit.Texture1);
+                shader.SetInt("metallicRoughnessTexture", 1);
+
+                material.GetAmbientOcclusion(textureManager).Use(TextureUnit.Texture2);
+                shader.SetInt("aoTexture", 2);
+
+                material.GetMetallic(textureManager).Use(TextureUnit.Texture4);
+                shader.SetInt("metallicTexture", 4);
+
+                material.GetRoughness(textureManager).Use(TextureUnit.Texture5);
+                shader.SetInt("roughnessTexture", 5);
+
+                material.GetNormal(textureManager).Use(TextureUnit.Texture6);
+                shader.SetInt("normalTexture", 6);
+
+                material.GetHeight(textureManager).Use(TextureUnit.Texture9);
+                shader.SetInt("heightTexture", 9);
+                shader.SetFloat("heightScale", material.heightScale);
+
+                bool useEnvironmentMap = false;
+                Texture environmentTexture = textureManager.Black;
+                if (scene.skyboxHdrGuid.HasValue && scene.skyboxHdrGuid.Value != Guid.Empty)
+                {
+                    Guid hdrGuid = scene.skyboxHdrGuid.Value;
+                    if (AssetDatabase.TryGetPath(hdrGuid, out var absHdrPath)
+                        && System.IO.File.Exists(absHdrPath))
+                    {
+                        environmentTexture = textureManager.GetHdr(absHdrPath);
+                        useEnvironmentMap = true;
+                    }
+                }
+
+                environmentTexture.Use(TextureUnit.Texture7);
+                shader.SetInt("environmentMap", 7);
+                shader.SetInt("useEnvironmentMap", useEnvironmentMap ? 1 : 0);
+                if (useEnvironmentMap)
+                {
+                    Texture lut = brdfLutCache.GetOrCreate(shaderManager);
+                    lut.Use(TextureUnit.Texture8);
+                    shader.SetInt("brdfLut", 8);
+                }
 
                 meshRenderer.vao.Bind();
                 GL.DrawArrays(PrimitiveType.Triangles, 0, meshRenderer.vertexCount);
@@ -124,30 +133,5 @@ namespace GameEngine.Engine
             }
         }
 
-        Matrix4 CreateModelMatrix(Transform transform)
-        {
-            Matrix4 translation = Matrix4.CreateTranslation(transform.WorldPosition);
-            Matrix4 rotation = Matrix4.CreateFromQuaternion(transform.WorldRotation);
-            Matrix4 scale = Matrix4.CreateScale(transform.WorldScale);
-
-            return scale * rotation * translation;
-        }
-
-        static Matrix4 CreateDirectionalLightSpaceMatrix(Vector3 lightDir, Vector3 sceneCenter)
-        {
-            // Choose a distance back from the scene so the light "sees" it
-            float distanceBack = 20f;
-            Vector3 lightPos = sceneCenter - lightDir.Normalized() * distanceBack;
-
-            // Ortho bounds: tweak these to fit your scene
-            float orthoSize = 7;
-            float near = 1f;
-            float far = 40f;
-
-            var lightView = Matrix4.LookAt(lightPos, sceneCenter, Vector3.UnitY);
-            var lightProj = Matrix4.CreateOrthographic(orthoSize, orthoSize, near, far);
-
-            return lightView * lightProj; 
-        }
     }
 }
