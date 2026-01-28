@@ -59,7 +59,6 @@ float ShadowFactor(vec4 fragPosLS, vec3 normal, vec3 lightDir)
 
     float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.0005);
 
-
     float shadow = 0.0;
 
     vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
@@ -139,6 +138,49 @@ mat3 CotangentFrame(vec3 N, vec3 p, vec2 uv)
     return mat3(T * invMax, B * invMax, N);
 }
 
+vec2 ReliefMapping(vec2 texCoords, vec3 viewDirTangent)
+{
+    if (viewDirTangent.z < 0.2)
+        return texCoords;
+
+    vec3 V = normalize(viewDirTangent);
+
+    float vz = max(V.z, 0.001);
+
+    vec2 rayStep = V.xy / vz * heightScale;
+
+    vec2 uv = texCoords;
+    float depth = 1.0 - texture(heightTexture, uv).r;
+    float rayDepth = 0.0;
+
+    uv -= rayStep;
+    rayDepth += 1.0;
+
+    vec2 step = rayStep * 0.5;
+    float depthStep = 0.5;
+
+    for (int i = 0; i < 5; i++)
+    {
+        float sampleDepth = 1.0 - texture(heightTexture, uv).r;
+
+        if (rayDepth < sampleDepth)
+        {
+            uv -= step;
+            rayDepth += depthStep;
+        }
+        else
+        {
+            uv += step;
+            rayDepth -= depthStep;
+        }
+
+        step *= 0.5;
+        depthStep *= 0.5;
+    }
+
+    return uv;
+}
+
 vec2 ParallaxOcclusionMapping(vec2 texCoords, vec3 viewDirTangent)
 {
     float ndotv = abs(viewDirTangent.z);
@@ -190,9 +232,15 @@ void main()
     vec2 localTexCoord = fract(tiledTexCoord);
     vec2 tileOffset = tiledTexCoord - localTexCoord;
 
+    float viewDist = length(viewPos - fragPos);
+
     vec2 parallaxLocal = localTexCoord;
-    if (heightScale > 0.0001)
-        parallaxLocal = ParallaxOcclusionMapping(localTexCoord, viewDirTangent);
+    if (heightScale > 0.0001 && viewDist < 7.5)
+    {
+        float pomFade = 1.0 - smoothstep(6.0, 12.0, viewDist);
+        vec2 reliefUV = ReliefMapping(localTexCoord, viewDirTangent);
+        parallaxLocal = mix(localTexCoord, reliefUV, pomFade);
+    }
 
     vec2 parallaxTexCoord = parallaxLocal + tileOffset;
 
