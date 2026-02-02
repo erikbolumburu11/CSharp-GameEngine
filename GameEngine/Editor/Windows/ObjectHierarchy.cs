@@ -62,7 +62,7 @@ namespace GameEngine.Editor
                 Dock = DockStyle.Fill,
                 AllowDrop = true,
                 HideSelection = false,
-                DrawMode = TreeViewDrawMode.OwnerDrawText,
+                DrawMode = TreeViewDrawMode.Normal,
             };
 
             treeView.AfterSelect += (s, e) =>
@@ -126,24 +126,38 @@ namespace GameEngine.Editor
 
         private void GameObjectRemoved(GameObject obj)
         {
-            bool wasSelected = treeView.SelectedNode?.Tag == obj;
-            SetGameObjects(gameObjectManager.gameObjects);
-
-            if (!wasSelected)
+            if (!nodesByObject.TryGetValue(obj, out var node))
                 return;
 
-            if (treeView.Nodes.Count == 0)
-            {
+            treeView.BeginUpdate();
+
+            bool wasSelected = treeView.SelectedNode == node;
+
+            node.Remove();
+            nodesByObject.Remove(obj);
+
+            if (wasSelected)
                 editorState.Select(null);
-                return;
-            }
 
-            treeView.SelectedNode = treeView.Nodes[0];
+            treeView.EndUpdate();
         }
+
 
         private void GameObjectAdded(GameObject obj)
         {
-            SetGameObjects(gameObjectManager.gameObjects);
+            treeView.BeginUpdate();
+
+            var node = new TreeNode(obj.name) { Tag = obj };
+            nodesByObject[obj] = node;
+
+            var parent = obj.transform.parent?.GameObject;
+
+            if (parent != null && nodesByObject.TryGetValue(parent, out var parentNode))
+                parentNode.Nodes.Add(node);
+            else
+                treeView.Nodes.Add(node);
+
+            treeView.EndUpdate();
         }
 
         private void GameObjectChanged(GameObject obj)
@@ -156,8 +170,28 @@ namespace GameEngine.Editor
 
         private void GameObjectHierarchyChanged(GameObject obj)
         {
-            SetGameObjects(gameObjectManager.gameObjects);
+            if (!nodesByObject.TryGetValue(obj, out var node))
+                return;
+
+            treeView.BeginUpdate();
+
+            bool wasExpanded = node.IsExpanded;
+
+            node.Remove();
+
+            var parent = obj.transform.parent?.GameObject;
+
+            if (parent != null && nodesByObject.TryGetValue(parent, out var parentNode))
+                parentNode.Nodes.Add(node);
+            else
+                treeView.Nodes.Add(node);
+
+            if (wasExpanded)
+                node.Expand();
+
+            treeView.EndUpdate();
         }
+
 
         public void SetGameObjects(IEnumerable<GameObject> objects)
         {
@@ -238,8 +272,6 @@ namespace GameEngine.Editor
                 treeView.Nodes.Add(node);
                 AddChildren(obj, node);
             }
-
-            treeView.ExpandAll();
 
             if (selectedObject != null && nodesByObject.TryGetValue(selectedObject, out var selectedNode))
             {
